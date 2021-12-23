@@ -69,19 +69,49 @@ class SIMPLE(object):
     indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # indices_z = 1, ... , nz - 1 has totally nz - 1 numbers
     indices = tf.stack([indices_x, indices_y, indices_z], axis = -1); # indices.shape = (nx - 2, ny - 1, nz - 1, 3)
     # areas
-    area_east = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2 * (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_west = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2 * (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_north = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_south = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_top = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
-    area_bottom = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
+    area_east = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2 * \
+                (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
+                (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_west = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2 * \
+                (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
+                (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_north = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * \
+                 (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_south = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * \
+                 (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_top = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
+               (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
+                  (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
     # flows
-    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z, dx = 1)) + tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
-    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z, dx = -1)) + tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
-    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dx = -1, dy = 1)) + tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dy = 1)));
-    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dx = -1)) + tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z)));
-    flow_top = .5 * self.rho * area_top * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dz = 1)) + tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dx = -1, dz = 1)));
-    flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dx = -1)));
+    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z, dx = 1)) + \
+                                             tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z, dx = -1)) + \
+                                             tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dx = -1, dy = 1)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dy = 1)));
+    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dx = -1)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_top = .5 * self.rho * area_top * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dz = 1)) + \
+                                           tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dx = -1, dz = 1)));
+    flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + \
+                                                 tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dx = -1)));
+    # system coefficients
+    Ae = tf.math.maximum(-flow_east, 0);
+    Aw = tf.math.maximum(flow_west, 0);
+    An = tf.math.maximum(-flow_north, 0);
+    As = tf.math.maximum(flow_south, 0);
+    At = tf.math.maximum(-flow_top, 0);
+    Ab = tf.math.maximum(flow_bottom, 0);
+    Apu = Ae + Aw + An + As + At + Ab;
+    Dcu = -(Ae * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dx = 1)) + \
+            Aw * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dx = -1)) + \
+            An * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dy = 1)) + \
+            As * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dy = -1)) + \
+            At * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dz = 1)) + \
+            Ab * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dz = -1)) + \
+            Apu * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)));
+    
 
   def momento_y(self,):
     pass;
