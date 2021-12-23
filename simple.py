@@ -173,9 +173,9 @@ class SIMPLE(object):
       self.u = (1 - self.omega_u) * u_old + tf.pad(Valor / Apu, [[2,1],[1,1],[1,1]]);
     Apu = tf.pad(Apu, [[2,1],[1,1],[1,1]]);
     return Apu;
-  def momento_y(self,):
+  def momento_y(self, u_old, v_old, w_old, velocity_iter):
     pass;
-  def momento_z(self,):
+  def momento_z(self, u_old, v_old, w_old, velocity_iter):
     pass;
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     u_old, v_old, w_old = self.u, self.v, self.w;
