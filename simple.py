@@ -111,7 +111,13 @@ class SIMPLE(object):
             At * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dz = 1)) + \
             Ab * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dz = -1)) + \
             Apu * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)));
-    
+    Dcc = .5 * (flow_east * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dx = 1)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z))) - \
+                flow_west * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dx = -1))) + \
+                flow_north * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dy = 1)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z))) - \
+                flow_south * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dy = -1))) + \
+                flow_top * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dz = 1)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z))) - \
+                flow_bottom * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z, dz = -1))));
+
 
   def momento_y(self,):
     pass;
