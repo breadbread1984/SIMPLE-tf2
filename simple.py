@@ -173,7 +173,6 @@ class SIMPLE(object):
       self.u = (1 - self.omega_u) * u_old + tf.pad(Valor / Apu, [[2,1],[1,1],[1,1]]);
     Apu = tf.pad(Apu, [[2,1],[1,1],[1,1]]);
     return Apu;
-
   def momento_y(self,):
     pass;
   def momento_z(self,):
@@ -181,6 +180,8 @@ class SIMPLE(object):
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     u_old, v_old, w_old = self.u, self.v, self.w;
     Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
+    Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
+    Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
 
 if __name__ == "__main__":
   simple = SIMPLE();
