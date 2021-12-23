@@ -70,7 +70,6 @@ class SIMPLE(object):
     indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x = 2, ... , nx - 1 has totally nx - 2 numbers
     indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # indices_y = 1, ... , ny - 1 has totally ny - 1 numbers
     indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # indices_z = 1, ... , nz - 1 has totally nz - 1 numbers
-    indices = tf.stack([indices_x, indices_y, indices_z], axis = -1); # indices.shape = (nx - 2, ny - 1, nz - 1, 3)
     # areas
     area_east = (tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2 * \
                 (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
