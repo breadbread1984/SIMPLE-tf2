@@ -82,9 +82,11 @@ class SIMPLE(object):
     area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x + 1)) / 2 * \
                  (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
     area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
-               (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2)**2 - ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
+               (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2)**2 - \
+                ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
     area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
-                  (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2)**2 - ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
+                  (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2)**2 - \
+                   ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
     # flows
     flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x + 1, indices_y, indices_z)) + \
                                              tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
