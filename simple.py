@@ -134,10 +134,10 @@ class SIMPLE(object):
                                                tf.gather_nd(v_old, self.indices(indices_x, self.ny * tf.ones_like(indices_y, dtype = tf.int32), indices_z)));
     flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x - 1, tf.ones_like(indices_y, dtype = tf.int32), indices_z)) + \
                                                tf.gather_nd(v_old, self.indices(indices_x, tf.ones_like(indices_y, dtype = tf.int32), indices_z)));
-    tail = tf.math.maximum(-flow_north, 0) + self.mu * area_north / ((tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * tf.gather(self.x, indices_x) / 2);
+    tail = tf.math.maximum(-flow_north, 0) + self.mu * area_north / ((tf.gather(self.y, self.ny * tf.ones_like(indices_y)) - tf.gather(self.y, (self.ny - 1) * tf.ones_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
     head = tf.math.maximum(flow_south, 0) + self.mu * area_south / ((tf.gather(self.y, tf.ones_like(indices_y)) - tf.gather(self.y, tf.zeros_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
-    An = tf.concat([An[:,:-1,:], tail[:,-1:,:]], axis = 1); # An.shape = (nx-2, ny-1, nz-1)
-    As = tf.concat([head[:,:1,:], As[:,1:,:]], axis = 1); # As.shape = (nx-2, ny-1, nz-1)
+    An_tail = tail[:,-1:,:]; # An.shape = (nx-2, 1, nz-1)
+    As_head = head[:,:1,:]; # As.shape = (nx-2, 1, nz-1)
     
     area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
                (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1))/2)**2 - \
@@ -151,10 +151,13 @@ class SIMPLE(object):
                                                        tf.gather_nd(w_old, self.indices(indices_x, indices_y, tf.ones_like(indices_z, dtype = tf.int32))));
     tail = tf.math.maximum(-flow_top, 0) + self.mu * area_top / ((tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z)) / 2);
     head = tf.math.maximum(flow_bottom, 0) + self.mu * area_bottom / ((tf.gather(self.z, tf.ones_like(indices_z)) - tf.gather(self.z, tf.zeros_like(indices_z))) / 2);
-    At = tf.concat([At[:,:,:-1], tail[:,:,-1:]], axis = 2); # An.shape = (nx-2, ny-1, nz-1)
-    Ab = tf.concat([head[:,:,:1], Ab[:,:,1:]], axis = 2); # Ab.shape = (nx-2, ny-1, nz-1)
+    At_tail = tail[:,:,-1:]; # An.shape = (nx-2, ny-1, 1)
+    Ab_head = head[:,:,:1]; # Ab.shape = (nx-2, ny-1, 1)
     # Calculation
-    Apu = (Ae + Aw + An + As + At + Ab) / self.omega_u;
+    Apu = (Ae + Aw + An + As + At + Ab) / self.omega_u; # Apu.shape = (nx - 2, ny - 1, nz - 1)
+    Apu = tf.concat([As_head, Apu, An_tail], axis = 1); # Apu.shape = (nx - 2, ny + 1, nz - 1)
+    Apu = tf.concat([tf.pad(Ab_head, [[0,0],[1,1],[0,0]]), Apu, tf.pad(At_tail, [[0,0],[1,1],[0,0]])], axis = 2); # Apu.shape = (nx - 2, ny + 1, nz + 1)
+    Apu = tf.pad(Apu, [[2,1],[0,0],[0,0]]); # Apu.shap = (nx + 1, ny + 1, nz + 1)
     # update self.u with iteration
     for i in range(velocity_iter):
       dV = -(tf.gather(self.y, indices_y - 1) - tf.gather(self.y, indices_y + 1)) * \
@@ -171,8 +174,7 @@ class SIMPLE(object):
               self.beta * (Dcc - Dcu) + \
               dV / dX * (tf.gather_nd(self.P, self.indices(indices_x - 1, indices_y, indices_z)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
-      self.u = (1 - self.omega_u) * u_old + tf.pad(Valor / Apu, [[2,1],[1,1],[1,1]]);
-    Apu = tf.pad(Apu, [[2,1],[1,1],[1,1]]);
+      self.u = (1 - self.omega_u) * u_old + tf.pad(Valor, [[2,1],[1,1],[1,1]]) / Apu;
     return Apu;
   def momento_y(self, u_old, v_old, w_old, velocity_iter):
     pass;
