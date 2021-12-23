@@ -51,11 +51,14 @@ class SIMPLE(object):
     return u,v,w,P;
   def setConditions(self,):
     # NOTE: derivable member function
-    omega = tf.constant(1/4);
     mask_x = tf.tile(tf.reshape(tf.math.logical_and(tf.math.less_equal(self.x, 0.4), tf.math.not_equal(self.x, 0)), (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)); # mask_x.shape = (nx + 1, 1, 1)
     mask_y = tf.tile(tf.reshape(tf.cast(tf.ones_like(self.y), dtype = tf.bool), (1, -1, 1)), (self.nx + 1, 1, self.nz + 1)); # mask_y.shape = (1, ny + 1, 1)
-    mask_z = tf.tile(tf.reshape(tf.math.logical_and(tf.math.greater_equal(self.z, 0.2), tf.math.not_equal(self.z, 0)), (1, 1, -1,)), (self.nx + 1, self.ny + 1, 1)); # mask_z.shape = (1, 1, nz + 1)
+    mask_z = tf.tile(tf.reshape(tf.math.greater_equal(self.z, 0.2), (1, 1, -1,)), (self.nx + 1, self.ny + 1, 1)); # mask_z.shape = (1, 1, nz + 1)
     mask = tf.math.logical_and(tf.math.logical_and(mask_x, mask_y), mask_z); # mask.shape = (nx + 1, ny + 1, nz + 1)
+    v_value = tf.tile(tf.reshape(self,x, (-1,1,1)), (1, self.ny + 1, self.nz + 1)); # v_value.shape = (nx + 1, ny + 1, nz + 1)
+    self.u = tf.where(mask, tf.zeros_like(self.u), self.u);
+    self.v = tf.where(mask, 0.25 * v_value, self.v);
+    self.w = tf.where(mask, tf.zeros_like(self.w), self.w);
 
 if __name__ == "__main__":
   simple = SIMPLE();
