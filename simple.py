@@ -26,17 +26,17 @@ class SIMPLE(object):
     return x,y,z;
   def fluid_properties(self,):
     # NOTE: derivable member function
-    rho = tf.constant(1);
-    mu = tf.constant(0.01);
+    rho = 1.;
+    mu = 0.01;
     return rho, mu;
   def underelaxation_properties(self,):
     # NOTE: derivable member function
-    omega_u = tf.constant(.5);
-    omega_v = tf.constant(.5);
-    omega_w = tf.constant(.5);
-    omega_p = tf.constant(.1);
-    omega_pp = tf.constant(1.7);
-    beta = tf.constant(0.95);
+    omega_u = .5;
+    omega_v = .5;
+    omega_w = .5;
+    omega_p = .1;
+    omega_pp = 1.7;
+    beta = 0.95;
     return omega_u, omega_v, omega_w, omega_p, omega_pp, beta;
   def initialization(self,):
     # NOTE: derivable member function
@@ -58,6 +58,39 @@ class SIMPLE(object):
     self.u = tf.where(mask, tf.zeros_like(self.u), self.u);
     self.v = tf.where(mask, 0.25 * x_value, self.v);
     self.w = tf.where(mask, tf.zeros_like(self.w), self.w);
+    self.u = tf.concat([self.u[:,-2:-1,:], self.u[:,-2:-1,:], self.u[:,2:-1,:], self.u[:,-2:-1,:]], axis = 1);
+    self.v = tf.concat([self.v[:,-2:-1,:], self.v[:,-2:-1,:], self.v[:,2:-1,:], self.v[:,-2:-1,:]], axis = 1);
+    self.w = tf.concat([self.w[:,-2:-1,:], self.w[:,-2:-1,:], self.w[:,2:-1,:], self.w[:,-2:-1,:]], axis = 1);
+  def indices(self, indices_x, indices_y, indices_z, dx = 0, dy = 0, dz = 0):
+    return tf.stack([indices_x + dx, indices_y + dy, indices_z + dz], axis = -1);
+  def momento_x(self, u_old, v_old, w_old):
+    indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x = 2, ... , nx - 1 has totally nx - 2 numbers
+    indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # indices_y = 1, ... , ny - 1 has totally ny - 1 numbers
+    indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # indices_z = 1, ... , nz - 1 has totally nz - 1 numbers
+    indices = tf.stack([indices_x, indices_y, indices_z], axis = -1); # indices.shape = (nx - 2, ny - 1, nz - 1, 3)
+    # areas
+    area_east = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2 * (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_west = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2 * (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_north = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_south = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
+    area_top = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
+    # flows
+    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z, dx = 1)) + tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z, dx = -1)) + tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dx = -1, dy = 1)) + tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dy = 1)));
+    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z, dx = -1)) + tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_top = .5 * self.rho * area_top * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dz = 1)) + tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dx = -1, dz = 1)));
+    flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z, dx = -1)));
+
+  def momento_y(self,):
+    pass;
+  def momento_z(self,):
+    pass;
+  def solve(self,):
+    u_old, v_old, w_old = self.u, self.v, self.w;
+    self.momento_x(u_old, v_old, w_old);
 
 if __name__ == "__main__":
   simple = SIMPLE();
+  simple.solve();
