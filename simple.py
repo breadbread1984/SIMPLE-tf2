@@ -72,20 +72,20 @@ class SIMPLE(object):
     indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # indices_z = 1, ... , nz - 1 has totally nz - 1 numbers
     indices = tf.stack([indices_x, indices_y, indices_z], axis = -1); # indices.shape = (nx - 2, ny - 1, nz - 1, 3)
     # areas
-    area_east = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2 * \
-                (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
-                (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_west = (tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2 * \
-                (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
-                (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_north = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * \
-                 (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_south = (tf.gather(self.x, indices[...,0] + 1) - tf.gather(self.x, indices[...,0] + 1)) / 2 * \
-                 (tf.gather(self.z, indices[...,2]) + tf.gather(self.z, indices[...,2] + 1)) / 2;
-    area_top = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
-               (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
-    area_bottom = (tf.gather(self.y, indices[...,1] + 1) - tf.gather(self.y, indices[...,1])) * \
-                  (((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] + 1)) / 2)**2 - ((tf.gather(self.x, indices[...,0]) + tf.gather(self.x, indices[...,0] - 1)) / 2)**2) / 2;
+    area_east = (tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2 * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+                (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_west = (tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2 * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+                (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_north = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x + 1)) / 2 * \
+                 (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x + 1)) / 2 * \
+                 (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+               (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2)**2 - ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+                  (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1)) / 2)**2 - ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
     # flows
     flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x + 1, indices_y, indices_z)) + \
                                              tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
