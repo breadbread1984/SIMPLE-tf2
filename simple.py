@@ -16,10 +16,13 @@ class SIMPLE(object):
     self.omega_u, self.omega_v, self.omega_w, self.omega_p, self.omega_pp, self.beta = self.underelaxation_properties();
     # velocities, pressure initialization
     self.u, self.v, self.w, self.P = self.initialization();
+    # set conditions 
+    self.setConditions();
   def domain_discretization(self,):
     x = tf.constant([i * 1/self.nx for i in range(self.nx + 1)]); # x in range [0,1] quantized into nx+1 values
     y = tf.constant([i * 2*pi/(self.ny + 1) for i in range(self.ny + 1)]); # y in range [0, 2 * pi] quantized into ny+1 values
     z = tf.constant([i * 1/self.nz for i in range(self.nz + 1)]); # z in range [0,1] quantized into nz+1 values
+    # NOTE: x.shape = (nx+1,) y.shape = (ny + 1) z.shape = (nz + 1)
     return x,y,z;
   def fluid_properties(self,):
     # NOTE: derivable member function
@@ -47,8 +50,15 @@ class SIMPLE(object):
     P = tf.zeros((self.nx+1, self.ny+1, self.nz+1)); # P.shape = (21, 31, 21)
     return u,v,w,P;
   def setConditions(self,):
+    # NOTE: derivable member function
     omega = constant(1/4);
-    indices_x = tf.tile(tf.reshape(tf.range(3,)))
+    indices_x = tf.reshape(tf.math.logical_and(tf.math.less_equal(self.x, 0.4), tf.math.not_equal(self.x, 0)), (-1, 1, 1)); # indices_x.shape = (nx + 1, 1, 1)
+    indices_y = tf.reshape(tf.cast(tf.ones_like(self.y), dtype = tf.bool), (1, -1, 1)); # indices_y.shape = (1, ny + 1, 1)
+    indices_z = tf.reshape(tf.math.logical_and(tf.math.greater_equal(self.z, 0.2), tf.math.not_equal(self.z, 0)), (1, 1, -1,)); # indices_z.shape = (1, 1, nz + 1)
+    mask_x = tf.tile(indices_x, (1, self.ny + 1, self.nz + 1)); # mask_x.shape = (nx + 1, ny + 1, nz + 1)
+    mask_y = tf.tile(indices_y, (self.nx + 1, 1, self.nz + 1)); # mask_y.shape = (nx + 1, ny + 1, nz + 1)
+    mask_z = tf.tile(indices_z, (self.nx + 1, self.ny + 1, 1)); # mask_z.shape = (nx + 1, ny + 1, nz + 1)
+    mask = tf.math.logical_and(tf.math.logical_and(mask_x, mask_y), mask_z); # mask.shape = (nx + 1, ny + 1, nz + 1)
 
 if __name__ == "__main__":
   simple = SIMPLE();
