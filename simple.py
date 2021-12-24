@@ -314,6 +314,14 @@ class SIMPLE(object):
                                            tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)));
     flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + \
                                                  tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z - 1)));
+    # system coefficients
+    Ae = tf.math.maximum(-flow_east, 0);
+    Aw = tf.math.maximum(flow_west, 0);
+    An = tf.math.maximum(-flow_north, 0);
+    As = tf.math.maximum(flow_south, 0);
+    At = tf.math.maximum(-flow_top, 0);
+    Ab = tf.math.maximum(flow_bottom, 0);
+    Apw = Ae + Aw + An + As + At + Ab;
     
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
