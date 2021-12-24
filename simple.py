@@ -260,8 +260,28 @@ class SIMPLE(object):
     At_tail = tail[:,:,-1:]; # At_tail.shape = (nx-1, ny-2, 1)
     Ab_head = head[:,:,:1]; # Ab_head.shape = (nx-1, ny-2, 1)
     # Calculation
-    
-    
+    Apv = (Ae + Aw + An + As + At + Ab) / self.omega_v; # Apv.shape = (nx-1, ny-2, nz-1)
+    Apv = tf.concat([Aw_head, Apv, Ae_tail], axis = 0); # Apv.shape = (nx+1, ny-2, nz-1)
+    Apv = tf.concat([tf.pad(Ab_head, [[1,1],[0,0],[0,0]]), Apv, tf.pad(At_tail, [[1,1],[0,0],[0,0]])], axis = 2); # Apv.shape = (nx+1, ny-2, nz+1)
+    Apv = tf.pad(Apv, [[0,0],[2,1],[0,0]]); # Apv.shape = (nx+1, ny+1, nz+1);
+    # update self.v with iteration
+    for i in range(velocity_iter):
+      dV = -(tf.gather(self.y, indices_y - 1) - tf.gather(self.y, indices_y + 1)) * \
+            (tf.gather(self.z, indices_z - 1) - tf.gather(self.z, indices_z + 1)) * \
+            (2 * tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1) + tf.gather(self.x, indices_x + 1)) * \
+            (tf.gather(self.x, indices_x - 1) - tf.gather(self.x, indices_x + 1)) / 32;
+      dY = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2;
+      Valor = Ae * tf.gather_nd(self.v, self.indices(indices_x + 1, indices_y, indices_z)) + \
+              Aw * tf.gather_nd(self.v, self.indices(indices_x - 1, indices_y, indices_z)) + \
+              An * tf.gather_nd(self.v, self.indices(indices_x, indices_y + 1, indices_z)) + \
+              As * tf.gather_nd(self.v, self.indices(indices_x, indices_y - 1, indices_z)) + \
+              At * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z + 1)) + \
+              Ab * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z - 1)) - \
+              self.beta * (Dcc - Dcu) + \
+              dV / dY * (tf.gather_nd(self.P, self.indices(indices_x, indices_y - 1, indices_z)) - \
+                         tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
+      self.v = (1 - self.omega_v) * v_old + tf.pad(Valor, [[1,1],[2,1],[1,1]]) / Apv;
+    return Apv;
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
     pass;
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
