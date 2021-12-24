@@ -229,7 +229,12 @@ class SIMPLE(object):
                 flow_south * (tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.v, self.indices(indices_x, indices_y - 1, indices_z))) + \
                 flow_top * (tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z + 1)) + tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z))) - \
                 flow_bottom * (tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z - 1))));
-    
+    Ae += self.mu * area_east / (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x));
+    Aw += self.mu * area_west / (tf.gather(self.x, indices_x) - tf.gather(self.x, indices_x - 1));
+    An += self.mu * area_north / ((tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * tf.gather(self.x, indices_x));
+    As += self.mu * area_south / ((tf.gather(self.y, indices_y) - tf.gather(self.y, indices_y - 1)) * tf.gather(self.x, indices_x));
+    At += self.mu * area_top / (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z));
+    Ab += self.mu * area_bottom / (tf.gather(self.z, indices_z) - tf.gather(self.z, indices_z - 1));
     
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
     pass;
