@@ -235,6 +235,14 @@ class SIMPLE(object):
     As += self.mu * area_south / ((tf.gather(self.y, indices_y) - tf.gather(self.y, indices_y - 1)) * tf.gather(self.x, indices_x));
     At += self.mu * area_top / (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z));
     Ab += self.mu * area_bottom / (tf.gather(self.z, indices_z) - tf.gather(self.z, indices_z - 1));
+    # outline
+    area_east = tf.gather(self.x, self.nx * tf.ones_like(indices_x)) * (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_west = tf.gather(self.x, tf.ones_like(indices_x)) * (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(self.nx * tf.ones_like(indices_x), indices_y, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(self.nx * tf.ones_like(indices_x), indices_y - 1, indices_z)));
+    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(tf.ones_like(indices_x), indices_y - 1, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(tf.ones_like(indices_x), indices_y, indices_z)));
+    
     
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
     pass;
