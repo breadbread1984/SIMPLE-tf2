@@ -113,8 +113,8 @@ class SIMPLE(object):
             An * tf.gather_nd(self.u, self.indices(indices_x, indices_y + 1, indices_z)) + \
             As * tf.gather_nd(self.u, self.indices(indices_x, indices_y - 1, indices_z)) + \
             At * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z + 1)) + \
-            Ab * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z - 1)) + \
-            Apu * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)));
+            Ab * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z - 1))) + \
+          Apu * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z));
     Dcc = .5 * (flow_east * (tf.gather_nd(self.u, self.indices(indices_x + 1, indices_y, indices_z)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z))) - \
                 flow_west * (tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.u, self.indices(indices_x - 1, indices_y, indices_z))) + \
                 flow_north * (tf.gather_nd(self.u, self.indices(indices_x, indices_y + 1, indices_z)) + tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z))) - \
@@ -221,8 +221,8 @@ class SIMPLE(object):
             An * tf.gather_nd(self.v, self.indices(indices_x, indices_y + 1, indices_z)) + \
             As * tf.gather_nd(self.v, self.indices(indices_x, indices_y - 1, indices_z)) + \
             At * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z + 1)) + \
-            Ab * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z - 1)) + \
-            Apv * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z)));
+            Ab * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z - 1))) + \
+          Apv * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z));
     Dcc = .5 * (flow_east * (tf.gather_nd(self.v, self.indices(indices_x + 1, indices_y, indices_z)) + tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z))) - \
                 flow_west * (tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z)) + tf.gather_nd(self.v, self.indices(indices_x - 1, indices_y, indices_z))) + \
                 flow_north * (tf.gather_nd(self.v, self.indices(indices_x, indices_y + 1, indices_z)) + tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z))) - \
@@ -322,7 +322,7 @@ class SIMPLE(object):
     At = tf.math.maximum(-flow_top, 0);
     Ab = tf.math.maximum(flow_bottom, 0);
     Apw = Ae + Aw + An + As + At + Ab;
-    
+    Dcu = 
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
