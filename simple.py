@@ -290,6 +290,19 @@ class SIMPLE(object):
     area_east = tf.gather(self.x, indices_x + 1) * \
                 (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_west = tf.gather(self.x, indices_x) * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+                (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_north = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) * \
+                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) * \
+                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+               (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+                  (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x)**2) / 2;
+    # flows
+    
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
