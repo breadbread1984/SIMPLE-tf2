@@ -247,6 +247,19 @@ class SIMPLE(object):
     Ae_tail = tail[-1:,:,:]; # Ae_tail.shape = (1, ny-2, nz-1)
     Aw_head = head[:1,:,:]; # Aw_head.shape = (1, ny-2, nz-1)
 
+    area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+               (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x - 1)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                  (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x - 1)**2) / 2;
+    flow_top = .5 * self.rho * area_top * (tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, self.nz * tf.ones_like(indices_z))) + \
+                                           tf.gather_nd(w_old, self.indices(indices_x, indices_y, self.nz * tf.ones_like(indices_z))));
+    flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, tf.ones_like(indices_z))) + \
+                                                 tf.gather_nd(w_old, self.indices(indices_x, indices_y, tf.ones_like(indices_z))));
+    tail = tf.math.maximum(-flow_top, 0) + self.mu * area_top / ((tf.gather(self.z, self.nz * tf.ones_like(indices_z)) - tf.gather(self.z, (self.nz - 1) * tf.ones_like(indices_z))) / 2);
+    head = tf.math.maximum(flow_bottom, 0) + self.mu * area_bottom / ((tf.gather(self.z, tf.ones_like(indices_z)) - tf.gather(self.z, tf.zeros_like(indices_z))) / 2);
+    At_tail = tail[:,:,-1:]; # At_tail.shape = (nx-1, ny-2, 1)
+    Ab_head = head[:,:,:1]; # Ab_head.shape = (nx-1, ny-2, 1)
+    # Calculation
     
     
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
