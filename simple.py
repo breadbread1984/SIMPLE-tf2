@@ -302,6 +302,18 @@ class SIMPLE(object):
     area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
                   (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x)**2) / 2;
     # flows
+    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x + 1, indices_y, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(indices_x + 1, indices_y, indices_z - 1)));
+    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z - 1)) + \
+                                             tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x, indices_y + 1, indices_z)) + 
+                                               tf.gather_nd(v_old, self.indices(indices_x, indices_y + 1, indices_z - 1)));
+    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z - 1)));
+    flow_top = .5 * self.rho * area_top * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z + 1)) + \
+                                           tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + \
+                                                 tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z - 1)));
     
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
