@@ -209,7 +209,20 @@ class SIMPLE(object):
     flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + \
                                                  tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, indices_z)));
     # system coefficients
-    
+    Ae = tf.math.maximum(-flow_east, 0);
+    Aw = tf.math.maximum(flow_west, 0);
+    An = tf.math.maximum(-flow_north, 0);
+    As = tf.math.maximum(flow_south, 0);
+    At = tf.math.maximum(-flow_top, 0);
+    Ab = tf.math.maximum(flow_bottom, 0);
+    Apv = Ae + Aw + An + As + At + Ab;
+    Dcu = -(Ae * tf.gather_nd(self.v, self.indices(indices_x + 1, indices_y, indices_z)) + \
+            Aw * tf.gather_nd(self.v, self.indices(indices_x - 1, indices_y, indices_z)) + \
+            An * tf.gather_nd(self.v, self.indices(indices_x, indices_y + 1, indices_z)) + \
+            As * tf.gather_nd(self.v, self.indices(indices_x, indices_y - 1, indices_z)) + \
+            At * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z + 1)) + \
+            Ab * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z - 1)) + \
+            Apv * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z)));
     
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
     pass;
