@@ -283,13 +283,22 @@ class SIMPLE(object):
       self.v = (1 - self.omega_v) * v_old + tf.pad(Valor, [[1,1],[2,1],[1,1]]) / Apv;
     return Apv;
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
-    pass;
+    indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 2)); # indices_x = 1, ... , nx - 1 has totally nx - 1 numbers
+    indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 2)); # indices_y = 1, ... , ny - 1 has totally ny - 1 numbers
+    indices_z = tf.tile(tf.reshape(tf.range(2, self.nz), (1, 1, -1)), (self.nx - 1, self.ny - 1, 1)); # indices_z = 2, ... , nz - 1 has totally nz - 2 numbers
+    # areas
+    area_east = tf.gather(self.x, indices_x + 1) * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
+                (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
-    u_old, v_old, w_old = self.u, self.v, self.w;
-    Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
-    Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
-    Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
+    for i in range(iteration):
+      u_old, v_old, w_old = self.u, self.v, self.w;
+      Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
+      Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
+      Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
+    return self.u, self.v, self.w, self.P;
 
 if __name__ == "__main__":
   simple = SIMPLE();
-  simple.solve();
+  u, v, w, P = simple.solve();
