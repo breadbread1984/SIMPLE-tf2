@@ -177,7 +177,40 @@ class SIMPLE(object):
       self.u = (1 - self.omega_u) * u_old + tf.pad(Valor, [[2,1],[1,1],[1,1]]) / Apu;
     return Apu;
   def momento_y(self, u_old, v_old, w_old, velocity_iter):
-    pass;
+    indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 2, self.nz - 1)); # indices_x = 1, ... , nx - 1 has totally nx - 1 numbers
+    indices_y = tf.tile(tf.reshape(tf.range(2, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # indices_y = 2, ... , ny - 1 has totally ny - 2 numbers
+    indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 1, self.ny - 2, 1)); # indices_z = 1, ... , nz - 1 has totally nz - 1 numbers
+    # areas
+    area_east = tf.gather(self.x, indices_x + 1) * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_west = tf.gather(self.x, indices_x) * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_north = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) * \
+                 (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) * \
+                 (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
+    area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+               (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x - 1)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                  (tf.gather(self.x, indices_x + 1)**2 - tf.gather(self.x, indices_x - 1)**2) / 2;
+    # flows
+    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(indices_x + 1, indices_y, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(indices_x + 1, indices_y - 1, indices_z)));
+    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(indices_x, indices_y - 1, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x, indices_y + 1, indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z)));
+    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x, indices_y, indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, indices_y - 1, indices_z)));
+    flow_top = .5 * self.rho * area_top * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z + 1)) + \
+                                           tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, indices_z + 1)));
+    flow_bottom = .5 * self.rho * area_bottom * (tf.gather_nd(w_old, self.indices(indices_x, indices_y, indices_z)) + \
+                                                 tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, indices_z)));
+    # system coefficients
+    
+    
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
     pass;
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
