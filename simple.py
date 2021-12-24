@@ -322,7 +322,13 @@ class SIMPLE(object):
     At = tf.math.maximum(-flow_top, 0);
     Ab = tf.math.maximum(flow_bottom, 0);
     Apw = Ae + Aw + An + As + At + Ab;
-    Dcu = 
+    Dcu = -(Ae * tf.gather_nd(self.w, self.indices(indices_x + 1, indices_y, indices_z)) + \
+            Aw * tf.gather_nd(self.w, self.indices(indices_x - 1, indices_y, indices_z)) + \
+            An * tf.gather_nd(self.w, self.indices(indices_x, indices_y + 1, indices_z)) + \
+            As * tf.gather_nd(self.w, self.indices(indices_x, indices_y - 1, indices_z)) + \
+            At * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z + 1)) + \
+            Ab * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z - 1))) + \
+          Apw * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z));
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
