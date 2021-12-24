@@ -242,6 +242,11 @@ class SIMPLE(object):
                                              tf.gather_nd(u_old, self.indices(self.nx * tf.ones_like(indices_x), indices_y - 1, indices_z)));
     flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(tf.ones_like(indices_x), indices_y - 1, indices_z)) + \
                                              tf.gather_nd(u_old, self.indices(tf.ones_like(indices_x), indices_y, indices_z)));
+    tail = tf.math.maximum(-flow_east, 0) + self.mu * area_east / ((tf.gather(self.x, self.nx * tf.ones_like(indices_x)) - tf.gather(self.x, (self.nx - 1) * tf.ones_like(indices_x))) / 2);
+    head = tf.math.maximum(flow_west, 0) + self.mu * area_west / ((tf.gather(self.x, tf.ones_like(indices_x)) - tf.gather(self.x, tf.zeros_like(indices_x))) / 2);
+    Ae_tail = tail[-1:,:,:]; # Ae_tail.shape = (1, ny-2, nz-1)
+    Aw_head = head[:1,:,:]; # Aw_head.shape = (1, ny-2, nz-1)
+
     
     
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
