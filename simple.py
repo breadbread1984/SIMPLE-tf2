@@ -386,7 +386,8 @@ class SIMPLE(object):
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
       self.w = (1 - self.omega_w) * w_old * tf.pad(Valor, [[1,1],[1,1],[2,1]]) / Apw;
     return Apw;
-    
+  def pressure(self, Apu, Apv, Apw, pressure_iter):
+    pass
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
       u_old, v_old, w_old = self.u, self.v, self.w;
