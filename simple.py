@@ -341,6 +341,16 @@ class SIMPLE(object):
     As += self.mu * area_south / ((tf.gather(self.y, indices_y) - tf.gather(self.y, indices_y - 1)) * tf.gather(self.x, indices_x));
     At += self.mu * area_top / (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z));
     Ab += self.mu * area_bottom / (tf.gather(self.z, indices_z) - tf.gather(self.z, indices_z - 1));
+    # outline
+    area_north = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) * (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) * (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x, self.ny * tf.ones_like(indices_y), indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, self.ny * tf.ones_like(indices_y), indices_z - 1)));
+    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x, tf.ones_like(indices_y), indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(indices_x, tf.ones_like(indices_y), indices_z - 1)));
+    tail = tf.math.maximum(-flow_north, 0) + self.mu * area_north / ((tf.gather(self.y, self.ny * tf.ones_like(indices_y)) - tf.gather(self.y, (self.ny - 1) * tf.ones_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
+    head = tf.math.maximum(flow_south, 0) + self.mu * area_south / ((tf.gather(self.y, tf.ones_like(indices_y)) - tf.gather(self.y, tf.zeros_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
+    
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
       u_old, v_old, w_old = self.u, self.v, self.w;
