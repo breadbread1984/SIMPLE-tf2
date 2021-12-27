@@ -350,6 +350,20 @@ class SIMPLE(object):
                                                tf.gather_nd(v_old, self.indices(indices_x, tf.ones_like(indices_y), indices_z - 1)));
     tail = tf.math.maximum(-flow_north, 0) + self.mu * area_north / ((tf.gather(self.y, self.ny * tf.ones_like(indices_y)) - tf.gather(self.y, (self.ny - 1) * tf.ones_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
     head = tf.math.maximum(flow_south, 0) + self.mu * area_south / ((tf.gather(self.y, tf.ones_like(indices_y)) - tf.gather(self.y, tf.zeros_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
+    An_tail = tail[:,-1:,:]; # An_tail.shape = (nx-1,1,nz-2)
+    As_head = head[:,:1,:]; # As_head.shape = (nx-1,1,nz-2)
+    
+    area_east = tf.gather(self.x, self.nx * tf.ones_like(indices_x)) / 2 * (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_west = tf.gather(self.x, tf.ones_like(indices_x)) / 2 * (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    flow_east = .5 * self.rho * area_east * (tf.gather_nd(u_old, self.indices(self.nx * tf.ones_like(indices_x), indices_y, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(self.nx * tf.ones_like(indices_x), indices_y, indices_z - 1)));
+    flow_west = .5 * self.rho * area_west * (tf.gather_nd(u_old, self.indices(tf.ones_like(indices_x), indices_y, indices_z)) + \
+                                             tf.gather_nd(u_old, self.indices(tf.ones_like(indices_x), indices_y, indices_z - 1)));
+    tail = tf.math.maximum(-flow_east, 0) + self.mu * area_east / (tf.gather(self.x, self.nx * tf.ones_like(indices_x)) - tf.gather(self.x, (self.nx - 1) * tf.ones_like(indices_x)) / 2);
+    head = tf.math.maximum(flow_west, 0) + self.mu * area_west / (tf.gather(self.x, tf.ones_like(indices_x)) - tf.gather(self.x, tf.zeros_like(indices_x)) / 2);
+    Ae_tail = tail[-1:,:,:]; # Ae_tail.shape = (1, ny-1, nz-2)
+    Aw_tail = head[:1,:,:]; # Aw_tail.shape = (1, ny-1, nz-2)
+    
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
