@@ -362,8 +362,15 @@ class SIMPLE(object):
     tail = tf.math.maximum(-flow_east, 0) + self.mu * area_east / (tf.gather(self.x, self.nx * tf.ones_like(indices_x)) - tf.gather(self.x, (self.nx - 1) * tf.ones_like(indices_x)) / 2);
     head = tf.math.maximum(flow_west, 0) + self.mu * area_west / (tf.gather(self.x, tf.ones_like(indices_x)) - tf.gather(self.x, tf.zeros_like(indices_x)) / 2);
     Ae_tail = tail[-1:,:,:]; # Ae_tail.shape = (1, ny-1, nz-2)
-    Aw_tail = head[:1,:,:]; # Aw_tail.shape = (1, ny-1, nz-2)
-    
+    Aw_head = head[:1,:,:]; # Aw_head.shape = (1, ny-1, nz-2)
+    # Calculation
+    Apw = (Ae + Aw + An + As + At + Ab) / self.omega_w; # Apw.shape = (nx-1, ny-1, nz-2)
+    Apw = tf.concat([As_head, Apw, An_tail], axis = 1); # Apw.shape = (nx-1, ny+1, nz-2)
+    Apw = tf.concat([tf.pad(Aw_head, [[0,0],[1,1],[0,0]]), Apw, tf.pad(Ae_tail, [[0,0],[1,1],[0,0]])], axis = 0); # Apw.shape = (nx+1, ny+1, nz-2)
+    Apw = tf.pad(Apw, [[0,0],[0,0],[2,1]]); # Apw.shape = (nx+1, ny+1, nz+1)
+    # update self.w with iteration
+    #for i in range(velocity_iter):
+      #dV = -()
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
