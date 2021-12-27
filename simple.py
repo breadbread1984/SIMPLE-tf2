@@ -369,8 +369,23 @@ class SIMPLE(object):
     Apw = tf.concat([tf.pad(Aw_head, [[0,0],[1,1],[0,0]]), Apw, tf.pad(Ae_tail, [[0,0],[1,1],[0,0]])], axis = 0); # Apw.shape = (nx+1, ny+1, nz-2)
     Apw = tf.pad(Apw, [[0,0],[0,0],[2,1]]); # Apw.shape = (nx+1, ny+1, nz+1)
     # update self.w with iteration
-    #for i in range(velocity_iter):
-      #dV = -()
+    for i in range(velocity_iter):
+      dV = -(tf.gather(self.y, indices_y - 1) - tf.gather(self.y, indices_y + 1)) * \
+            (tf.gather(self.z, indices_z - 1) - tf.gather(self.z, indices_z + 1)) * \
+            (2 * tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1) + tf.gather(self.x, indices_x + 1)) * \
+            (tf.gather(self.x, indices_x - 1) - tf.gather(self.x, indices_x + 1)) / 32;
+      dZ = (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+      Valor = Ae * tf.gather_nd(self.w, self.indices(indices_x + 1, indices_y, indices_z)) + \
+              Aw * tf.gather_nd(self.w, self.indices(indices_x - 1, indices_y, indices_z)) + \
+              An * tf.gather_nd(self.w, self.indices(indices_x, indices_y + 1, indices_z)) + \
+              As * tf.gather_nd(self.w, self.indices(indices_x, indices_y - 1, indices_z)) + \
+              At * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z + 1)) + \
+              Ab * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z - 1)) - \
+              self.beta * (Dcc - Dcu) + \
+              dV / dZ * (tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z - 1)) - \
+                         tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
+      self.w = (1 - self.omega_w) * w_old * tf.pad(Valor, [[1,1],[1,1],[2,1]]) / Apw;
+    return Apw;
     
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
