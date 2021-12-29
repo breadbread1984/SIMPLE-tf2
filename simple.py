@@ -17,7 +17,7 @@ class SIMPLE(object):
     # velocities, pressure initialization
     self.u, self.v, self.w, self.P = self.initialization();
     # set conditions 
-    self.setConditions();
+    self.set_conditions();
   def domain_discretization(self,):
     dx = 1/self.nx;
     x = tf.constant([i * dx for i in range(self.nx + 1)]); # x in range [0,1] quantized into nx+1 values
@@ -52,7 +52,7 @@ class SIMPLE(object):
     w = tf.zeros((self.nx+1, self.ny+1, self.nz+1)); # w.shape = (21, 31, 21)
     P = tf.zeros((self.nx+1, self.ny+1, self.nz+1)); # P.shape = (21, 31, 21)
     return u,v,w,P;
-  def setConditions(self,):
+  def set_conditions(self,):
     # NOTE: derivable member function
     mask_x = tf.tile(tf.reshape(tf.math.logical_and(tf.math.less_equal(self.x, 0.4), tf.math.not_equal(self.x, 0)), (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)); # mask_x.shape = (nx + 1, 1, 1)
     mask_z = tf.tile(tf.reshape(tf.math.greater_equal(self.z, 0.2), (1, 1, -1,)), (self.nx + 1, self.ny + 1, 1)); # mask_z.shape = (1, 1, nz + 1)
@@ -475,6 +475,7 @@ class SIMPLE(object):
       Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
       Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
       Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
+      self.set_conditions();
       Pp = self.pressure(Apu, Apv, Apw, pressure_iter);
     return self.u, self.v, self.w, self.P;
 
