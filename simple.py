@@ -387,7 +387,26 @@ class SIMPLE(object):
       self.w = (1 - self.omega_w) * w_old * tf.pad(Valor, [[1,1],[1,1],[2,1]]) / Apw;
     return Apw;
   def pressure(self, Apu, Apv, Apw, pressure_iter):
-    pass
+    indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x = 1, ..., nx - 1 has totally nx - 1 numbers
+    indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # indices_y = 1, ..., ny - 1 has totally ny - 1 numbers
+    indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 1, self.ny - 1, 1)); # indices_z = 1, ..., nz - 1 has totally nz - 1 numbers
+    area_east = (tf.gather(self.x, indices_x + 1) + tf.gather(self.x, indices_x)) / 2 * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_west = (tf.gather(self.x, indices_x - 1) + tf.gather(self.x, indices_x)) / 2 * \
+                (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_north = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x - 1)) / 2 * \
+                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x - 1)) / 2 * \
+                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
+    area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+               (((tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x))/2)**2 - \
+                ((tf.gather(self.x, indices_x) - tf.gather(self.x, indices_x - 1))/2)**2) / 2;
+    area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
+                  (((tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) / 2)**2 - \
+                   ((tf.gather(self.x, indices_x) - tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
+
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
       u_old, v_old, w_old = self.u, self.v, self.w;
