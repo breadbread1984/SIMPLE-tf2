@@ -406,6 +406,12 @@ class SIMPLE(object):
     area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
                   (((tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) / 2)**2 - \
                    ((tf.gather(self.x, indices_x) - tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
+    Ae = self.rho * area_east**2 / tf.gather_nd(Apu, self.indices(indices_x + 1, indices_y, indices_z));
+    Aw = self.rho * area_west**2 / tf.gather_nd(Apu, self.indices(indices_x, indices_y, indices_z));
+    An = self.rho * area_north**2 / tf.gather_nd(Apv, self.indices(indices_x, indices_y + 1, indices_z));
+    As = self.rho * area_south**2 / tf.gather_nd(Apv, self.indices(indices_x, indices_y, indices_z));
+    At = self.rho * area_top**2 / tf.gather_nd(Apw, self.indices(indices_x, indices_y, indices_z + 1));
+    Ab = self.rho * area_bottom**2 / tf.gather_nd(Apw, self.indices(indices_x, indices_y, indices_z));
 
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
@@ -413,6 +419,7 @@ class SIMPLE(object):
       Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
       Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
       Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
+      Pp = self.pressure(Apu, Apv, Apw, pressure_iter);
     return self.u, self.v, self.w, self.P;
 
 if __name__ == "__main__":
