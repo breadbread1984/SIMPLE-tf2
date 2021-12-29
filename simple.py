@@ -477,6 +477,7 @@ class SIMPLE(object):
       Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
       self.set_conditions();
       Pp = self.pressure(Apu, Apv, Apw, pressure_iter);
+      self.set_conditions();
     return self.u, self.v, self.w, self.P;
 
 if __name__ == "__main__":
