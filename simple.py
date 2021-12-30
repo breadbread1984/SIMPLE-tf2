@@ -408,7 +408,18 @@ class SIMPLE(object):
               self.beta * (Dcc - Dcu) + \
               dV / dZ * (tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z - 1)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
-      self.w = (1 - self.omega_w) * w_old * tf.pad(Valor, [[1,1],[1,1],[2,1]]) / Apw;
+      w_update = (1 - self.omega_w) * w_old * tf.pad(Valor, [[1,1],[1,1],[2,1]]) / Apw;
+      self.w = tf.where(
+                 tf.cast(tf.scatter_nd(
+                   tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)),
+                   tf.ones(((self.nx - 1) * (self.ny - 1) * (self.nz - 2),)),
+                   (self.nx + 1, self.ny + 1, self.nz + 1)), dtype = tf.bool),
+                 tf.scatter_nd(
+                   tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)),
+                   tf.reshape(w_update[1:-1,1:-1,2:-1], (-1,)),
+                   (self.nx + 1, self.ny + 1, self.nz + 1)),
+                 self.w
+               );
       assert tf.math.reduce_any(tf.math.is_nan(self.w)) != True;
     return Apw;
   def pressure(self, Apu, Apv, Apw, pressure_iter):
