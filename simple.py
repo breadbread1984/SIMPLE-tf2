@@ -174,7 +174,18 @@ class SIMPLE(object):
               self.beta * (Dcc - Dcu) + \
               dV / dX * (tf.gather_nd(self.P, self.indices(indices_x - 1, indices_y, indices_z)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
-      self.u = (1 - self.omega_u) * u_old + tf.pad(Valor, [[2,1],[1,1],[1,1]]) / Apu;
+      u_update = (1 - self.omega_u) * u_old + tf.pad(Valor, [[2,1],[1,1],[1,1]]) / Apu;
+      self.u = tf.where(
+                 tf.cast(tf.scatter_nd(
+                   tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)),
+                   tf.ones(((self.nx - 2) * (self.ny - 1) * (self.nz - 1),)),
+                   (self.nx + 1, self.ny + 1, self.nz + 1)), dtype = tf.bool),
+                 tf.scatter_nd(
+                   tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)),
+                   tf.reshape(u_update[2:-1,1:-1,1:-1], (-1,)),
+                   (self.nx + 1, self.ny + 1, self.nz + 1)),
+                 self.u
+               );
       assert tf.math.reduce_any(tf.math.is_nan(self.u)) != True;
     return Apu;
   def momento_y(self, u_old, v_old, w_old, velocity_iter):
