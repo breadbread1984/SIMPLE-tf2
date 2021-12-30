@@ -175,6 +175,7 @@ class SIMPLE(object):
               dV / dX * (tf.gather_nd(self.P, self.indices(indices_x - 1, indices_y, indices_z)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
       self.u = (1 - self.omega_u) * u_old + tf.pad(Valor, [[2,1],[1,1],[1,1]]) / Apu;
+      assert tf.math.reduce_any(tf.math.is_nan(self.u)) != True;
     return Apu;
   def momento_y(self, u_old, v_old, w_old, velocity_iter):
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 2, self.nz - 1)); # indices_x = 1, ... , nx - 1 has totally nx - 1 numbers
@@ -281,6 +282,7 @@ class SIMPLE(object):
               dV / dY * (tf.gather_nd(self.P, self.indices(indices_x, indices_y - 1, indices_z)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
       self.v = (1 - self.omega_v) * v_old + tf.pad(Valor, [[1,1],[2,1],[1,1]]) / Apv;
+      assert tf.math.reduce_any(tf.math.is_nan(self.v)) != True;
     return Apv;
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 2)); # indices_x = 1, ... , nx - 1 has totally nx - 1 numbers
@@ -385,6 +387,7 @@ class SIMPLE(object):
               dV / dZ * (tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z - 1)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
       self.w = (1 - self.omega_w) * w_old * tf.pad(Valor, [[1,1],[1,1],[2,1]]) / Apw;
+      assert tf.math.reduce_any(tf.math.is_nan(self.w)) != True;
     return Apw;
   def pressure(self, Apu, Apv, Apw, pressure_iter):
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x = 1, ..., nx - 1 has totally nx - 1 numbers
@@ -465,8 +468,10 @@ class SIMPLE(object):
             tf.gather_nd(Ab, self.indices(indices_x, indices_y, indices_z)) * tf.gather_nd(padded_Pp, self.indices(indices_x, indices_y, indices_z - 1)) - \
             tf.gather_nd(Source, self.indices(indices_x, indices_y, indices_z)) - \
             tf.gather_nd(App, self.indices(indices_x, indices_y, indices_z)));
+      assert tf.math.reduce_any(tf.math.is_nan(Pp)) != True;
     Pp = tf.pad(Pp, [[1,1],[1,1],[1,1]]);
     self.P = self.P + self.omega_p * Pp;
+    assert tf.math.reduce_any(tf.math.is_nan(self.P)) != True;
     return Pp;
   def ensure_quality(self, Pp, Apu, Apv, Apw):
     # correcting u
