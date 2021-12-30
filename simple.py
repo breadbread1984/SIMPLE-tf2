@@ -610,6 +610,11 @@ class SIMPLE(object):
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     errors = list();
     for i in range(iteration):
+      u_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.u)) else 'false';
+      v_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.v)) else 'false';
+      w_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.w)) else 'false';
+      p_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.P)) else 'false';
+      print('step: %d u is nan: %s, v is nan: %s, w is nan: %s, p is nan: %s' % (i, u_is_nan, v_is_nan, w_is_nan, p_is_nan));
       u_old, v_old, w_old = self.u, self.v, self.w;
       Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
       Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
