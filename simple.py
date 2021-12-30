@@ -609,16 +609,21 @@ class SIMPLE(object):
     errors.append(tf.math.sqrt(tf.math.reduce_sum(Source**2)));
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     errors = list();
-    for i in range(iteration):
+    def debug(i):
       u_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.u)) else 'false';
       v_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.v)) else 'false';
       w_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.w)) else 'false';
       p_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.P)) else 'false';
       print('step: %d u is nan: %s, v is nan: %s, w is nan: %s, p is nan: %s' % (i, u_is_nan, v_is_nan, w_is_nan, p_is_nan));
-      u_old, v_old, w_old = self.u, self.v, self.w;
+    for i in range(iteration):
+      debug(i);
+      u_old, v_old, w_old = tf.identity(self.u), tf.identity(self.v), tf.identity(self.w);
       Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
+      debug(i);
       Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
+      debug(i);
       Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
+      debug(i);
       self.set_conditions();
       Pp = self.pressure(Apu, Apv, Apw, pressure_iter);
       self.set_conditions();
