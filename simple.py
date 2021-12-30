@@ -292,7 +292,18 @@ class SIMPLE(object):
               self.beta * (Dcc - Dcu) + \
               dV / dY * (tf.gather_nd(self.P, self.indices(indices_x, indices_y - 1, indices_z)) - \
                          tf.gather_nd(self.P, self.indices(indices_x, indices_y, indices_z)));
-      self.v = (1 - self.omega_v) * v_old + tf.pad(Valor, [[1,1],[2,1],[1,1]]) / Apv;
+      v_update = (1 - self.omega_v) * v_old + tf.pad(Valor, [[1,1],[2,1],[1,1]]) / Apv;
+      self.v = tf.where(
+                 tf.cast(tf.scatter_nd(
+                   tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)),
+                   tf.ones(((self.nx - 1) * (self.ny - 2) * (self.nz - 1),)),
+                   (self.nx + 1, self.ny + 1, self.nz + 1)), dtype = tf.bool),
+                 tf.scatter_nd(
+                   tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)),
+                   tf.reshape(v_update[1:-1,2:-1,1:-1], (-1,)),
+                   (self.nx + 1, self.ny + 1, self.nz + 1)),
+                 self.v
+               );
       assert tf.math.reduce_any(tf.math.is_nan(self.v)) != True;
     return Apv;
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
