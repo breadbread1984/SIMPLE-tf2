@@ -186,6 +186,7 @@ class SIMPLE(object):
                    (self.nx + 1, self.ny + 1, self.nz + 1)),
                  self.u
                );
+      assert tf.math.reduce_any(tf.math.is_inf(self.u)) != True;
       assert tf.math.reduce_any(tf.math.is_nan(self.u)) != True;
     return Apu;
   def momento_y(self, u_old, v_old, w_old, velocity_iter):
@@ -304,6 +305,7 @@ class SIMPLE(object):
                    (self.nx + 1, self.ny + 1, self.nz + 1)),
                  self.v
                );
+      assert tf.math.reduce_any(tf.math.is_inf(self.v)) != True;
       assert tf.math.reduce_any(tf.math.is_nan(self.v)) != True;
     return Apv;
   def momento_z(self, u_old, v_old, w_old, velocity_iter):
@@ -420,6 +422,7 @@ class SIMPLE(object):
                    (self.nx + 1, self.ny + 1, self.nz + 1)),
                  self.w
                );
+      assert tf.math.reduce_any(tf.math.is_inf(self.w)) != True;
       assert tf.math.reduce_any(tf.math.is_nan(self.w)) != True;
     return Apw;
   def pressure(self, Apu, Apv, Apw, pressure_iter):
@@ -501,9 +504,11 @@ class SIMPLE(object):
             tf.gather_nd(Ab, self.indices(indices_x, indices_y, indices_z)) * tf.gather_nd(padded_Pp, self.indices(indices_x, indices_y, indices_z - 1)) - \
             tf.gather_nd(Source, self.indices(indices_x, indices_y, indices_z)) - \
             tf.gather_nd(App, self.indices(indices_x, indices_y, indices_z)));
+      assert tf.math.reduce_any(tf.math.is_inf(Pp)) != True;
       assert tf.math.reduce_any(tf.math.is_nan(Pp)) != True;
     Pp = tf.pad(Pp, [[1,1],[1,1],[1,1]]);
     self.P = self.P + self.omega_p * Pp;
+    assert tf.math.reduce_any(tf.math.is_inf(self.P)) != True;
     assert tf.math.reduce_any(tf.math.is_nan(self.P)) != True;
     return Pp;
   def ensure_quality(self, Pp, Apu, Apv, Apw):
