@@ -469,6 +469,7 @@ class SIMPLE(object):
     self.P = self.P + self.omega_p * Pp;
     return Pp;
   def ensure_quality(self, Pp, Apu, Apv, Apw):
+    # correcting u
     u_indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # u_indices.x.shape = (nx-2, ny-1, nz-1)
     u_indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # u_indices_y.shape = (nx-2, ny-1, nz-1)
     u_indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # u_indices_z.shape = (nx-2, ny-1, nz-1)
@@ -492,6 +493,29 @@ class SIMPLE(object):
                  tf.reshape(u_update, (-1,)),
                  (self.nx + 1, self.ny + 1, self.nz + 1)),
                self.u
+             );
+    # correcting v
+    v_indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 2, self.nz - 1)); # v_indices_x.shape = (nx-1, ny-2, nz-1)
+    v_indices_y = tf.tile(tf.reshape(tf.range(2, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # v_indices_y.shape = (nx-1, ny-2, nz-1)
+    v_indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 1, self.ny - 2, 1)); # v_indices_z.shape = (nx-1, ny-2, nz-1)
+    area_north = (tf.gather(self.x, v_indices_x + 1) - tf.gather(self.x, v_indices_x - 1)) / 2 * \
+                 (tf.gather(self.z, v_indices_z + 1) - tf.gather(self.z, v_indices_z - 1)) / 2;
+    area_south = (tf.gather(self.x, v_indices_x + 1) - tf.gather(self.x, v_indices_x - 1)) / 2 * \
+                 (tf.gather(self.z, v_indices_z + 1) - tf.gather(self.z, v_indices_z - 1)) / 2;
+    v_update = tf.gather_nd(self.v, self.indices(v_indices_x, v_indices_y, v_indices_z)) + \
+               1 / tf.gather_nd(Apv, self.indices(v_indices_x, v_indices_y, v_indices_z)) * \
+               (area_south * tf.gather_nd(Pp, self.indices(v_indices_x, v_indices_y - 1, v_indices_z)) - \
+                area_north * tf.gather_nd(Pp, self.indices(v_indices_x, v_indices_y, v_indices_z)));
+    self.v = tf.where(
+               tf.cast(tf.scatter_nd(
+                 tf.reshape(self.indices(v_indices_x, v_indices_y, v_indices_z), (-1, 3)),
+                 tf.ones(((self.nx - 1) * (self.ny - 2) * (self.nz - 1),)),
+                 (self.nx + 1, self.ny + 1, self.nz + 1)), dtype = tf.bool),
+               tf.scatter_nd(
+                 tf.reshape(self.indices(v_indices_x, v_indices_y, v_indices_z), (-1, 3)),
+                 tf.reshape(v_update, (-1,)),
+                 (self.nx + 1, self.ny + 1, self.nz + 1)),
+               self.v
              );
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
