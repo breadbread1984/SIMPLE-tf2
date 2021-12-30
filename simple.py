@@ -562,7 +562,13 @@ class SIMPLE(object):
     area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
                   (((tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x)) / 2)**2 - \
                    ((tf.gather(self.x, indices_x) - tf.gather(self.x, indices_x - 1)) / 2)**2) / 2;
-    
+    Source = self.rho * (area_east * tf.gather_nd(self.u, self.indices(indices_x + 1, indices_y, indices_z)) - \
+                         area_west * tf.gather_nd(self.u, self.indices(indices_x, indices_y, indices_z))) + \
+             self.rho * (area_north * tf.gather_nd(self.v, self.indices(indices_x, indices_y + 1, indices_z)) - \
+                         area_south * tf.gather_nd(self.v, self.indices(indices_x, indices_y, indices_z))) + \
+             self.rho * (area_top * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z + 1)) - \
+                         area_bottom * tf.gather_nd(self.w, self.indices(indices_x, indices_y, indices_z)));
+    errors.append(tf.math.sqrt(tf.math.reduce_sum(Source**2)));
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     errors = list();
     for i in range(iteration):
@@ -576,8 +582,12 @@ class SIMPLE(object):
       self.ensure_quality(Pp, Apu, Apv, Apw);
       self.set_conditions();
       self.error_source(errors);
+      if tf.math.is_nan(errors[-1]): break;
+      if i > 1 and tf.math.abs(errors[-2] - errors[-1]) / tf.math.abs(errors[-2]) < 1e-12: break;
+      if errors[-1] / errors[0] < 1e-3: break;
     return self.u, self.v, self.w, self.P;
 
 if __name__ == "__main__":
   simple = SIMPLE();
   u, v, w, P = simple.solve();
+  print(u,v,w,P);
