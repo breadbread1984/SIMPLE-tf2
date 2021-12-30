@@ -468,7 +468,31 @@ class SIMPLE(object):
     Pp = tf.pad(Pp, [[1,1],[1,1],[1,1]]);
     self.P = self.P + self.omega_p * Pp;
     return Pp;
-
+  def ensure_quality(self, Pp, Apu, Apv, Apw):
+    u_indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # u_indices.x.shape = (nx-2, ny-1, nz-1)
+    u_indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # u_indices_y.shape = (nx-2, ny-1, nz-1)
+    u_indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # u_indices_z.shape = (nx-2, ny-1, nz-1)
+    area_east = (tf.gather(self.x, u_indices_x + 1) + tf.gather(self.x, u_indices_x)) / 2 * \
+                (tf.gather(self.y, u_indices_y + 1) - tf.gather(self.y, u_indices_y - 1)) / 2 * \
+                (tf.gather(self.z, u_indices_z + 1) - tf.gather(self.z, u_indices_z - 1)) / 2;
+    area_west = (tf.gather(self.x, u_indices_x - 1) + tf.gather(self.x, u_indices_x)) / 2 * \
+                (tf.gather(self.y, u_indices_y + 1) - tf.gather(self.y, u_indices_y - 1)) / 2 * \
+                (tf.gather(self.z, u_indices_z + 1) - tf.gather(self.z, u_indices_z - 1)) / 2;
+    u_update = tf.gather_nd(self.u, self.indices(u_indices_x, u_indices_y, u_indices_z)) + \
+               1 / tf.gather_nd(Apu, self.indices(u_indices_x, u_indices_y, u_indices_z)) * \
+               (area_west * tf.gather_nd(Pp, self.indices(u_indices_x - 1, u_indices_y, u_indices_z)) - \
+                area_east * tf.gather_nd(Pp, self.indices(u_indices_x, u_indices_y, u_indices_z)));
+    self.u = tf.where(
+               tf.cast(tf.scatter_nd(
+                 tf.reshape(self.indices(u_indices_x, u_indices_y, u_indices_z), (-1, 3)),
+                 tf.ones(((self.nx - 2) * (self.ny - 1) * (self.nz - 1),)),
+                 (self.nx + 1, self.ny + 1, self.nz + 1)), dtype = tf.bool),
+               tf.scatter_nd(
+                 tf.reshape(self.indices(u_indices_x, u_indices_y, u_indices_z), (-1, 3)),
+                 tf.reshape(u_update, (-1,)),
+                 (self.nx + 1, self.ny + 1, self.nz + 1)),
+               self.u
+             );
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     for i in range(iteration):
       u_old, v_old, w_old = self.u, self.v, self.w;
@@ -478,6 +502,7 @@ class SIMPLE(object):
       self.set_conditions();
       Pp = self.pressure(Apu, Apv, Apw, pressure_iter);
       self.set_conditions();
+      self.ensure_quality(Pp, Apu, Apv, Apw);
     return self.u, self.v, self.w, self.P;
 
 if __name__ == "__main__":
