@@ -132,36 +132,44 @@ class SIMPLE(object):
     At += self.mu * area_top / (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z));
     Ab += self.mu * area_bottom / (tf.gather(self.z, indices_z) - tf.gather(self.z, indices_z - 1));
     # outline
-    area_north = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x + 1)) / 2 * (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
-    area_south = (tf.gather(self.x, indices_x + 1) - tf.gather(self.x, indices_x + 1)) / 2 * (tf.gather(self.z, indices_z) + tf.gather(self.z, indices_z + 1)) / 2;
-    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(indices_x - 1, self.ny * tf.ones_like(indices_y, dtype = tf.int32), indices_z)) + \
-                                               tf.gather_nd(v_old, self.indices(indices_x, self.ny * tf.ones_like(indices_y, dtype = tf.int32), indices_z)));
-    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(indices_x - 1, tf.ones_like(indices_y, dtype = tf.int32), indices_z)) + \
-                                               tf.gather_nd(v_old, self.indices(indices_x, tf.ones_like(indices_y, dtype = tf.int32), indices_z)));
-    tail = tf.math.maximum(-flow_north, 0) + self.mu * area_north / ((tf.gather(self.y, self.ny * tf.ones_like(indices_y)) - tf.gather(self.y, (self.ny - 1) * tf.ones_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
-    head = tf.math.maximum(flow_south, 0) + self.mu * area_south / ((tf.gather(self.y, tf.ones_like(indices_y)) - tf.gather(self.y, tf.zeros_like(indices_y))) * tf.gather(self.x, indices_x) / 2);
-    An_tail = tail[:,-1:,:]; # An.shape = (nx-2, 1, nz-1)
-    As_head = head[:,:1,:]; # As.shape = (nx-2, 1, nz-1)
-    
-    area_top = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
-               (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1))/2)**2 - \
-                ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1))/2)**2) / 2;
-    area_bottom = (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y)) * \
-                  (((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x + 1))/2)**2 - \
-                   ((tf.gather(self.x, indices_x) + tf.gather(self.x, indices_x - 1))/2)**2) / 2;
-    flow_top = .5 * self.rho * self.dx * self.dy * (tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, self.nz * tf.ones_like(indices_z, dtype = tf.int32))) + \
-                                                    tf.gather_nd(w_old, self.indices(indices_x, indices_y, self.nz * tf.ones_like(indices_z))));
-    flow_bottom = .5 * self.rho * self.dx * self.dy * (tf.gather_nd(w_old, self.indices(indices_x, indices_y - 1, tf.ones_like(indices_z, dtype = tf.int32))) + \
-                                                       tf.gather_nd(w_old, self.indices(indices_x, indices_y, tf.ones_like(indices_z, dtype = tf.int32))));
-    tail = tf.math.maximum(-flow_top, 0) + self.mu * area_top / ((tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z)) / 2);
-    head = tf.math.maximum(flow_bottom, 0) + self.mu * area_bottom / ((tf.gather(self.z, tf.ones_like(indices_z)) - tf.gather(self.z, tf.zeros_like(indices_z))) / 2);
-    At_tail = tail[:,:,-1:]; # An.shape = (nx-2, ny-1, 1)
-    Ab_head = head[:,:,:1]; # Ab.shape = (nx-2, ny-1, 1)
+    ns_indices_x = tf.tile(tf.reshape(tf.range(2,self.nx), (-1, 1, 1)), (1, 1, self.nz - 1)); # ns_indices_x.shape = (nx-2, 1, nz-1)
+    ns_head_indices_y = tf.tile(tf.reshape([1], (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # ns_head_indices_y.shape = (nx-2, 1, nz-1)
+    ns_tail_indices_y = tf.tile(tf.reshape([self.ny], (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # ns_tail_indices_y.shape = (nx-2, 1, nz-1)
+    ns_indices_z = tf.tile(tf.reshape(tf.range(1,self.nz), (1, 1, -1)), (self.nx - 2, 1, 1)); # ns_indices_z.shape = (nx-2, 1, nz-1)
+    area_north = (tf.gather(self.x, ns_indices_x + 1) - tf.gather(self.x, ns_indices_x + 1)) / 2 * \
+                 (tf.gather(self.z, ns_indices_z) + tf.gather(self.z, ns_indices_z + 1)) / 2;
+    area_south = (tf.gather(self.x, ns_indices_x + 1) - tf.gather(self.x, ns_indices_x + 1)) / 2 * \
+                 (tf.gather(self.z, ns_indices_z) + tf.gather(self.z, ns_indices_z + 1)) / 2;
+    flow_north = .5 * self.rho * area_north * (tf.gather_nd(v_old, self.indices(ns_indices_x - 1, ns_tail_indices_y, ns_indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(ns_indices_x, ns_tail_indices_y, ns_indices_z)));
+    flow_south = .5 * self.rho * area_south * (tf.gather_nd(v_old, self.indices(ns_indices_x - 1, ns_head_indices_y, ns_indices_z)) + \
+                                               tf.gather_nd(v_old, self.indices(ns_indices_x, ns_head_indices_y, ns_indices_z)));
+    An_tail = tf.math.maximum(-flow_north, 0) + self.mu * area_north / ((tf.gather(self.y, ns_tail_indices_y) - tf.gather(self.y, ns_tail_indices_y - 1)) * tf.gather(self.x, ns_indices_x) / 2); # An_tail.shape = (nx-2, 1, nz-1)
+    As_head = tf.math.maximum(flow_south, 0) + self.mu * area_south / ((tf.gather(self.y, ns_head_indices_y) - tf.gather(self.y, ns_head_indices_y - 1)) * tf.gather(self.x, ns_indices_x) / 2); # An_head.shape = (nx-2, 1, nz-1)
+    An = tf.concat([An[:,:-1,:], An_tail], axis = 1); # An.shape = (nx-2, ny-1, nz-1)
+    As = tf.concat([As_head, As[:,1:,:]], axis = 1); # As.shape = (nx-2, ny-1, nz-1)
+
+    tb_indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, 1)); # tb_indices_x.shape = (nx-2, ny-1, 1)
+    tb_indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 2, 1, 1)); # tb_indices_y.shape = (nx-2, ny-1, 1)
+    tb_head_indices_z = tf.tile(tf.reshape([1], (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # tb_head_indices_z.shape = (nx-2, ny-1, 1)
+    tb_tail_indices_z = tf.tile(tf.reshape([self.nz], (1, 1, -1)), (self.nx - 2, self.ny - 1, 1)); # tb_tail_indices_z.shape = (nx-2, ny-1, 1)
+    area_top = (tf.gather(self.y, tb_indices_y + 1) - tf.gather(self.y, tb_indices_y)) * \
+               (((tf.gather(self.x, tb_indices_x) + tf.gather(self.x, tb_indices_x + 1))/2)**2 - \
+                ((tf.gather(self.x, tb_indices_x) + tf.gather(self.x, tb_indices_x - 1))/2)**2) / 2;
+    area_bottom = (tf.gather(self.y, tb_indices_y + 1) - tf.gather(self.y, tb_indices_y)) * \
+                  (((tf.gather(self.x, tb_indices_x) + tf.gather(self.x, tb_indices_x + 1))/2)**2 - \
+                   ((tf.gather(self.x, tb_indices_x) + tf.gather(self.x, tb_indices_x - 1))/2)**2) / 2;
+    flow_top = .5 * self.rho * self.dx * self.dy * (tf.gather_nd(w_old, self.indices(tb_indices_x, tb_indices_y - 1, tb_tail_indices_z)) + \
+                                                    tf.gather_nd(w_old, self.indices(tb_indices_x, tb_indices_y, tb_tail_indices_z)));
+    flow_bottom = .5 * self.rho * self.dx * self.dy * (tf.gather_nd(w_old, self.indices(tb_indices_x, tb_indices_y - 1, tb_head_indices_z)) + \
+                                                       tf.gather_nd(w_old, self.indices(tb_indices_x, tb_indices_y, tb_head_indices_z)));
+    At_tail = tf.math.maximum(-flow_top, 0) + self.mu * area_top / ((tf.gather(self.z, tb_tail_indices_z) - tf.gather(self.z, tb_tail_indices_z - 1)) / 2);
+    Ab_head = tf.math.maximum(flow_bottom, 0) + self.mu * area_bottom / ((tf.gather(self.z, tb_head_indices_z) - tf.gather(self.z, tb_head_indices_z - 1)) / 2);
+    At = tf.concat([At[:,:,:-1], At_tail], axis = 2); # An.shape = (nx-2, ny-1, nz-1)
+    Ab = tf.concat([Ab_head, Ab[:,:,1:]], axis = 2); # Ab.shape = (nx-2, ny-1, nz-1)
     # Calculation
     Apu = (Ae + Aw + An + As + At + Ab) / self.omega_u; # Apu.shape = (nx - 2, ny - 1, nz - 1)
-    Apu = tf.concat([As_head, Apu, An_tail], axis = 1); # Apu.shape = (nx - 2, ny + 1, nz - 1)
-    Apu = tf.concat([tf.pad(Ab_head, [[0,0],[1,1],[0,0]]), Apu, tf.pad(At_tail, [[0,0],[1,1],[0,0]])], axis = 2); # Apu.shape = (nx - 2, ny + 1, nz + 1)
-    Apu = tf.pad(Apu, [[2,1],[0,0],[0,0]]); # Apu.shap = (nx + 1, ny + 1, nz + 1)
+    Apu = tf.pad(Apu, [[2,1],[1,1],[1,1]]); # Apu.shap = (nx + 1, ny + 1, nz + 1)
     # update self.u with iteration
     for i in range(velocity_iter):
       dV = -(tf.gather(self.y, indices_y - 1) - tf.gather(self.y, indices_y + 1)) * \
