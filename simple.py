@@ -54,13 +54,17 @@ class SIMPLE(object):
     return u,v,w,P;
   def set_conditions(self,):
     # NOTE: derivable member function
-    mask_x = tf.tile(tf.reshape(tf.math.logical_and(tf.math.less_equal(self.x, 0.4), tf.math.not_equal(self.x, 0)), (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)); # mask_x.shape = (nx + 1, 1, 1)
-    mask_z = tf.tile(tf.reshape(tf.math.greater_equal(self.z, 0.2), (1, 1, -1,)), (self.nx + 1, self.ny + 1, 1)); # mask_z.shape = (1, 1, nz + 1)
-    mask = tf.math.logical_and(mask_x, mask_z); # mask.shape = (nx + 1, ny + 1, nz + 1)
-    x_value = tf.tile(tf.reshape(self.x, (-1,1,1)), (1, self.ny + 1, self.nz + 1)); # x_value.shape = (nx + 1, ny + 1, nz + 1)
+    indices_x = tf.tile(tf.reshape(tf.range(1, self.nx + 1), (-1, 1, 1)), (1, self.ny + 1, self.nz)); # indices_x.shape = (nx, ny+1, nz)
+    indices_y = tf.tile(tf.reshape(tf.range(0, self.ny + 1), (1, -1, 1)), (self.nx, 1, self.nz)); # indices_y.shape = (nx, ny+1, nz)
+    indices_z = tf.tile(tf.reshape(tf.range(1, self.nz + 1), (1, 1, -1)), (self.nx, self.ny + 1, 1)); # indices_z.shape = (nx, ny+1. nz)
+    loop_mask = tf.scatter_nd(tf.reshape(self.indices(indices_x, indices_y, indices_z), (-1, 3)), tf.ones((self.nx * (self.ny + 1) * self.nz,), dtype = tf.bool), (self.nx + 1, self.ny + 1, self.nz + 1)); # loop_mask.shape = (nx+1, ny+1, nz+1)
+    x_less_mask = tf.tile(tf.reshape(tf.math.less_equal(self.x, 0.4), (-1, 1, 1)), (1, self.ny + 1, self.nz + 1));
+    z_greater_mask = tf.tile(tf.reshape(tf.math.greater_equal(self.z, 0.2), (1, 1, -1)), (self.nx + 1, self.ny + 1, 1));
+    mask = tf.math.logical_and(tf.math.logical_and(x_less_mask, z_greater_mask), loop_mask);
     self.u = tf.where(mask, tf.zeros_like(self.u), self.u);
-    self.v = tf.where(mask, 0.25 * x_value, self.v);
-    self.w = tf.where(mask, tf.zeros_like(self.w), self.w);
+    self.v = tf.where(mask, tf.zeros_like(self.v), self.v);
+    self.w = tf.where(mask, 0.25 * tf.tile(tf.reshape(self.x, (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)), self.w);
+
     self.u = tf.concat([self.u[:,-2:-1,:], self.u[:,-2:-1,:], self.u[:,2:-1,:], self.u[:,-2:-1,:]], axis = 1);
     self.v = tf.concat([self.v[:,-2:-1,:], self.v[:,-2:-1,:], self.v[:,2:-1,:], self.v[:,-2:-1,:]], axis = 1);
     self.w = tf.concat([self.w[:,-2:-1,:], self.w[:,-2:-1,:], self.w[:,2:-1,:], self.w[:,-2:-1,:]], axis = 1);
