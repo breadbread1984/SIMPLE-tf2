@@ -475,7 +475,6 @@ class SIMPLE(object):
     As = self.rho * area_south**2 / tf.gather_nd(Apv, self.indices(indices_x, indices_y, indices_z));
     At = self.rho * area_top**2 / tf.gather_nd(Apw, self.indices(indices_x, indices_y, indices_z + 1));
     Ab = self.rho * area_bottom**2 / tf.gather_nd(Apw, self.indices(indices_x, indices_y, indices_z));
-
     Ae = tf.concat([Ae[:-1,:,:], tf.zeros_like(Ae[-1:,:,:])], axis = 0); # Ae.shape = (nx-1, ny-1, nz-1)
     Aw = tf.concat([tf.zeros_like(Aw[:1,:,:]), Aw[1:,:,:]], axis = 0); # Aw.shape = (nx-1, ny-1, nz-1)
     An = tf.concat([An[:,:-1,:], tf.zeros_like(An[:,-1:,:])], axis = 1); # An.shape = (nx-1, ny-1, nz-1)
@@ -483,8 +482,10 @@ class SIMPLE(object):
     At = tf.concat([At[:,:,:-1], tf.zeros_like(At[:,:,-1:])], axis = 2); # At.shape = (nx-1, ny-1, nz-1)
     Ab = tf.concat([tf.zeros_like(Ab[:,:,:1]), Ab[:,:,1:]], axis = 2); # Ab.shape = (nx-1, ny-1, nz-1)
     App = Ae + Aw + An + As + At + Ab;
-    App = tf.where(tf.cast(tf.scatter_nd([[0,0,0]], tf.constant([1], dtype = tf.float32), App.shape), dtype = tf.bool), 1e30 * tf.ones_like(App), App);
-    App = tf.concat([App[:,:,:-1], 1e30*tf.ones_like(App[:,:,-1:])], axis = 2);
+    App = tf.pad(App, [[1,1],[1,1],[1,1]]);
+    App = tf.where(tf.cast(tf.scatter_nd([[1,1,1]], tf.constant([1], dtype = tf.float32), App.shape), dtype = tf.bool), 1e30 * tf.ones_like(App), App);
+    App = tf.concat([App[:,:,:-2], 1e30*tf.ones_like(App[:,:,-2:-1]), App[:,:,-1:]], axis = 2);
+
     area_east = (tf.gather(self.x, indices_x + 1) + tf.gather(self.x, indices_x)) / 2 * \
                 (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
@@ -514,7 +515,6 @@ class SIMPLE(object):
     At = tf.pad(At, [[1,1],[1,1],[1,1]]);
     Ab = tf.pad(Ab, [[1,1],[1,1],[1,1]]);
     Source = tf.pad(Source, [[1,1],[1,1],[1,1]]);
-    App = tf.pad(App, [[1,1],[1,1],[1,1]]);
     Pp = tf.zeros((self.nx - 1, self.ny - 1, self.nz - 1), dtype = tf.float32);
     for i in range(pressure_iter):
       padded_Pp = tf.pad(Pp, [[1,1],[1,1],[1,1]]);
