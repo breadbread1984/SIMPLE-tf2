@@ -518,7 +518,7 @@ class SIMPLE(object):
     Pp = tf.zeros((self.nx - 1, self.ny - 1, self.nz - 1), dtype = tf.float32);
     for i in range(pressure_iter):
       padded_Pp = tf.pad(Pp, [[1,1],[1,1],[1,1]]);
-      Pp = Pp + self.omega_pp + \
+      Pp = Pp + \
            self.omega_pp / tf.gather_nd(App, self.indices(indices_x, indices_y, indices_z)) * \
            (tf.gather_nd(Ae, self.indices(indices_x, indices_y, indices_z)) * tf.gather_nd(padded_Pp, self.indices(indices_x + 1, indices_y, indices_z)) + \
             tf.gather_nd(Aw, self.indices(indices_x, indices_y, indices_z)) * tf.gather_nd(padded_Pp, self.indices(indices_x - 1, indices_y, indices_z)) + \
@@ -527,6 +527,7 @@ class SIMPLE(object):
             tf.gather_nd(At, self.indices(indices_x, indices_y, indices_z)) * tf.gather_nd(padded_Pp, self.indices(indices_x, indices_y, indices_z + 1)) + \
             tf.gather_nd(Ab, self.indices(indices_x, indices_y, indices_z)) * tf.gather_nd(padded_Pp, self.indices(indices_x, indices_y, indices_z - 1)) - \
             tf.gather_nd(Source, self.indices(indices_x, indices_y, indices_z)) - \
+            tf.gather_nd(padded_Pp, self.indices(indices_x, indices_y, indices_z)) * \
             tf.gather_nd(App, self.indices(indices_x, indices_y, indices_z)));
       assert tf.math.reduce_any(tf.math.is_inf(Pp)) != True;
       assert tf.math.reduce_any(tf.math.is_nan(Pp)) != True;
