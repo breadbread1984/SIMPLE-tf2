@@ -18,9 +18,6 @@ class SIMPLE(object):
     self.u, self.v, self.w, self.P = self.initialization();
     # set conditions 
     self.set_conditions();
-    import numpy as np;
-    np.savez("state_tf.npz", u= self.u.numpy(), v = self.v.numpy(), w = self.w.numpy(), p = self.P.numpy());
-    exit()
   def domain_discretization(self,):
     dx = 1/self.nx;
     x = tf.constant([i * dx for i in range(self.nx + 1)], dtype = tf.float32); # x in range [0,1] quantized into nx+1 values
@@ -65,7 +62,7 @@ class SIMPLE(object):
     z_greater_mask = tf.tile(tf.reshape(tf.math.greater_equal(self.z, 0.2), (1, 1, -1)), (self.nx + 1, self.ny + 1, 1));
     mask = tf.math.logical_and(tf.math.logical_and(x_less_mask, z_greater_mask), loop_mask);
     self.u = tf.where(mask, tf.zeros_like(self.u), self.u);
-    self.v = tf.where(mask, 0.25 * tf.tile(tf.reshape(self.x, (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)), self.v);
+    self.v = tf.where(mask, 2.5 * tf.tile(tf.reshape(self.x, (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)), self.v);
     self.w = tf.where(mask, tf.zeros_like(self.w), self.w);
 
     self.u = tf.concat([self.u[:,-2:-1,:], self.u[:,-2:-1,:], self.u[:,2:-1,:], self.u[:,-2:-1,:]], axis = 1);
