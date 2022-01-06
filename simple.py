@@ -18,13 +18,16 @@ class SIMPLE(object):
     self.u, self.v, self.w, self.P = self.initialization();
     # set conditions 
     self.set_conditions();
+    import numpy as np;
+    np.savez("state_tf.npz", u= self.u.numpy(), v = self.v.numpy(), w = self.w.numpy(), p = self.P.numpy());
+    exit()
   def domain_discretization(self,):
     dx = 1/self.nx;
-    x = tf.constant([i * dx for i in range(self.nx + 1)], dtype = tf.float64); # x in range [0,1] quantized into nx+1 values
+    x = tf.constant([i * dx for i in range(self.nx + 1)], dtype = tf.float32); # x in range [0,1] quantized into nx+1 values
     dy = 2*pi/(self.ny + 1);
-    y = tf.constant([i * dy for i in range(self.ny + 1)], dtype = tf.float64); # y in range [0, 2 * pi] quantized into ny+1 values
+    y = tf.constant([i * dy for i in range(self.ny + 1)], dtype = tf.float32); # y in range [0, 2 * pi] quantized into ny+1 values
     dz = 1/self.nz;
-    z = tf.constant([i * dz for i in range(self.nz + 1)], dtype = tf.float64); # z in range [0,1] quantized into nz+1 values
+    z = tf.constant([i * dz for i in range(self.nz + 1)], dtype = tf.float32); # z in range [0,1] quantized into nz+1 values
     # NOTE: x.shape = (nx+1,) y.shape = (ny + 1) z.shape = (nz + 1)
     return x,y,z, dx,dy,dz;
   def fluid_properties(self,):
@@ -47,10 +50,10 @@ class SIMPLE(object):
     indices_y = tf.tile(tf.reshape(tf.range(1,self.ny), (1,-1,1)), (self.nx-1,1,self.nz-1)); # yy.shape = (nx-1,ny-1,nz-1)
     indices_z = tf.tile(tf.reshape(tf.range(1,self.nz), (1,1,-1)), (self.nx-1,self.ny-1,1)); # zz.shape = (nx-1,ny-1,nz-1)
     indices = tf.stack([indices_x,indices_y,indices_z], axis = -1); # indices.shape = (nx-1,ny-1,nz-1,3)
-    u = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = tf.float64); # u.shape = (21, 31, 21)
-    v = tf.scatter_nd(indices = indices, updates = tf.ones((self.nx-1,self.ny-1,self.nz-1), dtype = tf.float64), shape = (self.nx+1,self.ny+1,self.nz+1)); # v.shape = (21, 31, 21)
-    w = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = tf.float64); # w.shape = (21, 31, 21)
-    P = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = tf.float64); # P.shape = (21, 31, 21)
+    u = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = tf.float32); # u.shape = (21, 31, 21)
+    v = tf.scatter_nd(indices = indices, updates = tf.ones((self.nx-1,self.ny-1,self.nz-1), dtype = tf.float32), shape = (self.nx+1,self.ny+1,self.nz+1)); # v.shape = (21, 31, 21)
+    w = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = tf.float32); # w.shape = (21, 31, 21)
+    P = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = tf.float32); # P.shape = (21, 31, 21)
     return u,v,w,P;
   def set_conditions(self,):
     # NOTE: derivable member function
@@ -62,8 +65,8 @@ class SIMPLE(object):
     z_greater_mask = tf.tile(tf.reshape(tf.math.greater_equal(self.z, 0.2), (1, 1, -1)), (self.nx + 1, self.ny + 1, 1));
     mask = tf.math.logical_and(tf.math.logical_and(x_less_mask, z_greater_mask), loop_mask);
     self.u = tf.where(mask, tf.zeros_like(self.u), self.u);
-    self.v = tf.where(mask, tf.zeros_like(self.v), self.v);
-    self.w = tf.where(mask, 0.25 * tf.tile(tf.reshape(self.x, (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)), self.w);
+    self.v = tf.where(mask, 0.25 * tf.tile(tf.reshape(self.x, (-1, 1, 1)), (1, self.ny + 1, self.nz + 1)), self.v);
+    self.w = tf.where(mask, tf.zeros_like(self.w), self.w);
 
     self.u = tf.concat([self.u[:,-2:-1,:], self.u[:,-2:-1,:], self.u[:,2:-1,:], self.u[:,-2:-1,:]], axis = 1);
     self.v = tf.concat([self.v[:,-2:-1,:], self.v[:,-2:-1,:], self.v[:,2:-1,:], self.v[:,-2:-1,:]], axis = 1);
@@ -483,7 +486,7 @@ class SIMPLE(object):
     At = tf.concat([At[:,:,:-1], tf.zeros_like(At[:,:,-1:])], axis = 2); # At.shape = (nx-1, ny-1, nz-1)
     Ab = tf.concat([tf.zeros_like(Ab[:,:,:1]), Ab[:,:,1:]], axis = 2); # Ab.shape = (nx-1, ny-1, nz-1)
     App = Ae + Aw + An + As + At + Ab;
-    App = tf.where(tf.cast(tf.scatter_nd([[0,0,0]], tf.constant([1], dtype = tf.float64), App.shape), dtype = tf.bool), 1e30 * tf.ones_like(App), App);
+    App = tf.where(tf.cast(tf.scatter_nd([[0,0,0]], tf.constant([1], dtype = tf.float32), App.shape), dtype = tf.bool), 1e30 * tf.ones_like(App), App);
     App = tf.concat([App[:,:,:-1], 1e30*tf.ones_like(App[:,:,-1:])], axis = 2);
     area_east = (tf.gather(self.x, indices_x + 1) + tf.gather(self.x, indices_x)) / 2 * \
                 (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
@@ -515,7 +518,7 @@ class SIMPLE(object):
     Ab = tf.pad(Ab, [[1,1],[1,1],[1,1]]);
     Source = tf.pad(Source, [[1,1],[1,1],[1,1]]);
     App = tf.pad(App, [[1,1],[1,1],[1,1]]);
-    Pp = tf.zeros((self.nx - 1, self.ny - 1, self.nz - 1), dtype = tf.float64);
+    Pp = tf.zeros((self.nx - 1, self.ny - 1, self.nz - 1), dtype = tf.float32);
     for i in range(pressure_iter):
       padded_Pp = tf.pad(Pp, [[1,1],[1,1],[1,1]]);
       Pp = Pp + self.omega_pp + \
