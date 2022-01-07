@@ -612,9 +612,9 @@ class SIMPLE(object):
                self.w
              );
   def error_source(self, errors):
-    indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 2, self.nz - 2)); # indices_x.shape = (nx-2, ny-2, nz-2)
-    indices_y = tf.tile(tf.reshape(tf.range(2, self.ny), (1, -1, 1)), (self.nx - 2, 1, self.nz - 2)); # indices_y.shape = (nx-2, ny-2, nz-2)
-    indices_z = tf.tile(tf.reshape(tf.range(2, self.nz), (1, 1, -1)), (self.nx - 2, self.ny - 2, 1)); # indices_z.shape = (nx-2, ny-2, nz-2)
+    indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x.shape = (nx-1, ny-1, nz-1)
+    indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # indices_y.shape = (nx-1, ny-1, nz-1)
+    indices_z = tf.tile(tf.reshape(tf.range(1, self.nz), (1, 1, -1)), (self.nx - 1, self.ny - 1, 1)); # indices_z.shape = (nx-1, ny-1, nz-1)
     area_east = (tf.gather(self.x, indices_x + 1) + tf.gather(self.x, indices_x)) / 2 * \
                 (tf.gather(self.y, indices_y + 1) - tf.gather(self.y, indices_y - 1)) / 2 * \
                 (tf.gather(self.z, indices_z + 1) - tf.gather(self.z, indices_z - 1)) / 2;
