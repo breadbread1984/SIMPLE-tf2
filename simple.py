@@ -68,6 +68,7 @@ class SIMPLE(object):
     self.u = tf.concat([self.u[:,-2:-1,:], self.u[:,-2:-1,:], self.u[:,2:-1,:], self.u[:,-2:-1,:]], axis = 1);
     self.v = tf.concat([self.v[:,-2:-1,:], self.v[:,-2:-1,:], self.v[:,2:-1,:], self.v[:,-2:-1,:]], axis = 1);
     self.w = tf.concat([self.w[:,-2:-1,:], self.w[:,-2:-1,:], self.w[:,2:-1,:], self.w[:,-2:-1,:]], axis = 1);
+    self.P = tf.concat([self.P[:,-1:,:], self.P[:,1:,:]], axis = 1);
   def indices(self, indices_x, indices_y, indices_z, dx = 0, dy = 0, dz = 0):
     return tf.stack([indices_x + dx, indices_y + dy, indices_z + dz], axis = -1);
   def momento_x(self, u_old, v_old, w_old, velocity_iter):
