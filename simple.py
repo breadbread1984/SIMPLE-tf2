@@ -738,15 +738,15 @@ class SIMPLE(object):
   def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
     errors = list();
     def debug(i):
-      u_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.u)) else 'false';
-      v_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.v)) else 'false';
-      w_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.w)) else 'false';
-      p_is_nan = 'true' if tf.math.reduce_any(tf.math.is_nan(self.P)) else 'false';
+      u_is_nan = 'true' if np.any(np.isnan(self.u)) else 'false';
+      v_is_nan = 'true' if np.any(np.isnan(self.v)) else 'false';
+      w_is_nan = 'true' if np.any(np.isnan(self.w)) else 'false';
+      p_is_nan = 'true' if np.any(np.isnan(self.P)) else 'false';
       print('step: %d u is nan: %s, v is nan: %s, w is nan: %s, p is nan: %s' % (i, u_is_nan, v_is_nan, w_is_nan, p_is_nan));
-      u_is_inf = 'true' if tf.math.reduce_any(tf.math.is_inf(self.u)) else 'false';
-      v_is_inf = 'true' if tf.math.reduce_any(tf.math.is_inf(self.v)) else 'false';
-      w_is_inf = 'true' if tf.math.reduce_any(tf.math.is_inf(self.w)) else 'false';
-      p_is_inf = 'true' if tf.math.reduce_any(tf.math.is_inf(self.P)) else 'false';
+      u_is_inf = 'true' if np.any(np.isinf(self.u)) else 'false';
+      v_is_inf = 'true' if np.any(np.isinf(self.v)) else 'false';
+      w_is_inf = 'true' if np.any(np.isinf(self.w)) else 'false';
+      p_is_inf = 'true' if np.any(np.isinf(self.P)) else 'false';
       print('step: %d u is inf: %s, v is inf: %s, w is inf: %s, p is inf: %s' % (i, u_is_inf, v_is_inf, w_is_inf, p_is_inf));
     for i in range(iteration):
       debug(i);
