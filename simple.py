@@ -34,7 +34,7 @@ class SIMPLE(object):
       self.momento_z_inputs, self.momento_z_outputs = self.momento_z(10);
     self.pressure_graph = tf.Graph();
     with self.pressure_graph.as_default():
-      self.pressure_inputs, self.pressure_outputs = self.pressure_graph(20);
+      self.pressure_inputs, self.pressure_outputs = self.pressure(20);
     self.ensure_quality_graph = tf.Graph();
     with self.ensure_quality_graph.as_default():
       self.ensure_quality_inputs, self.ensure_quality_outputs = self.ensure_quality();
