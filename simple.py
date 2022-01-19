@@ -781,8 +781,9 @@ class SIMPLE(object):
       with tf.Session(graph = self.error_source_graph) as sess:
         error = sess.run([output for output in self.error_source_outputs],
                          feed_dict = {input:value for input, value in zip(self.error_source_inputs, [self.u, self.v, self.w, self.x, self.y, self.z])});
-      if tf.math.is_nan(errors[-1]): break;
-      if i > 1 and tf.math.abs(errors[-2] - errors[-1]) / tf.math.abs(errors[-2]) < 1e-12: break;
+      errors.append(error);
+      if np.is_nan(errors[-1]): break;
+      if i > 1 and np.abs(errors[-2] - errors[-1]) / np.abs(errors[-2]) < 1e-12: break;
       if errors[-1] / errors[0] < 1e-3: break;
     return self.u, self.v, self.w, self.P;
 
