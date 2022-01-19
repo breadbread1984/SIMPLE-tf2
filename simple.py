@@ -779,7 +779,7 @@ class SIMPLE(object):
         self.u, self.v, self.w, self.P = sess.run([output for output in self.set_conditions_outputs],
                                                   feed_dict = {input:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
       with tf.Session(graph = self.error_source_graph) as sess:
-        error = sess.run([output for output in self.error_source_outputs],
+        error, = sess.run([output for output in self.error_source_outputs],
                          feed_dict = {input:value for input, value in zip(self.error_source_inputs, [self.u, self.v, self.w, self.x, self.y, self.z])});
       errors.append(error);
       if np.isnan(errors[-1]): break;
