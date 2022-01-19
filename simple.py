@@ -750,19 +750,37 @@ class SIMPLE(object):
       print('step: %d u is inf: %s, v is inf: %s, w is inf: %s, p is inf: %s' % (i, u_is_inf, v_is_inf, w_is_inf, p_is_inf));
     for i in range(iteration):
       debug(i);
-      u_old, v_old, w_old = tf.identity(self.u), tf.identity(self.v), tf.identity(self.w);
-      Apu = self.momento_x(u_old, v_old, w_old, velocity_iter);
+      u_old, v_old, w_old = np.copy(self.u), np.copy(self.v), np.copy(self.w);
+      with tf.Session(graph = self.momento_x_graph) as sess:
+        self.u, Apu = sess.run([output for output in self.momento_x_outputs],
+                               feed_dict = {input:value for input, value in zip(self.momento_x_inputs, [self.u, self.P, u_old, v_old, w_old, self.x, self.y, self.z])});
       debug(i);
-      Apv = self.momento_y(u_old, v_old, w_old, velocity_iter);
+      with tf.Session(graph = self.momento_y_graph) as sess:
+        self.v, Apv = sess.run([output for output in self.momento_y_outputs],
+                               feed_dict = {input:value for input, value in zip(self.momento_y_inputs, [self.v, self.P, u_old, v_old, w_old, self.x, self.y, self.z])});
       debug(i);
-      Apw = self.momento_z(u_old, v_old, w_old, velocity_iter);
+      with tf.Session(graph = self.momento_z_graph) as sess:
+        self.w, Apw = sess.run([output for output in self.momento_z_outputs],
+                               feed_dict = {input:value for input, value in zip(self.momento_z_inputs, [self.w, self.P, u_old, v_old, w_old, self.x, self.y, self.z])});
       debug(i);
-      self.set_conditions();
-      Pp = self.pressure(Apu, Apv, Apw, pressure_iter);
-      self.set_conditions();
-      self.ensure_quality(Pp, Apu, Apv, Apw);
-      self.set_conditions();
-      self.error_source(errors);
+      with tf.Session(graph = self.set_conditions_graph) as sess:
+        self.u, self.v, self.w, self.P = sess.run([output for output in self.set_conditions_outputs],
+                                                  feed_dict = {input:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
+      with tf.Session(graph = self.pressure_graph) as sess:
+        self.P, Pp = sess.run([output for output in self.pressure_outputs],
+                              feed_dict = {input:value for input, value in zip(self.pressure_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z, Apu, Apv, Apw])});
+      with tf.Session(graph = self.set_conditions_graph) as sess:
+        self.u, self.v, self.w, self.P = sess.run([output for output in self.set_conditions_outputs],
+                                                  feed_dict = {input:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
+      with tf.Session(graph = self.ensure_quality_graph) as sess:
+        self.u, self.v, self.w = sess.run([output for output in self.ensure_quality_outputs],
+                                          feed_dict = {input:value for input, value in zip(self.ensure_quality_inputs, [self.u, self.v, self.w, self.x, self.y, self.z, Pp, Apu, Apv, Apw])});
+      with tf.Session(graph = self.set_conditions_graph) as sess:
+        self.u, self.v, self.w, self.P = sess.run([output for output in self.set_conditions_outputs],
+                                                  feed_dict = {input:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
+      with tf.Session(graph = self.error_source_graph) as sess:
+        error = sess.run([output for output in self.error_source_outputs],
+                         feed_dict = {input:value for input, value in zip(self.error_source_inputs, [self.u, self.v, self.w, self.x, self.y, self.z])});
       if tf.math.is_nan(errors[-1]): break;
       if i > 1 and tf.math.abs(errors[-2] - errors[-1]) / tf.math.abs(errors[-2]) < 1e-12: break;
       if errors[-1] / errors[0] < 1e-3: break;
