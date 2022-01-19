@@ -16,11 +16,10 @@ class SIMPLE(object):
     self.rho, self.mu = self.fluid_properties();
     # underelaxation properties
     self.omega_u, self.omega_v, self.omega_w, self.omega_p, self.omega_pp, self.beta = self.underelaxation_properties();
-    # velocities, pressure initialization
-    self.u, self.v, self.w, self.P = self.initialization();
-    # set conditions 
-    self.set_conditions();
     # create computing graphs
+    self.initialization_graph = tf.Graph();
+    with self.initialization_graph.as_default():
+      self.initialization_outputs = self.initialization();
     self.set_conditions_graph = tf.Graph();
     with self.set_conditions_graph.as_default():
       self.set_conditions_inputs, self.set_conditions_outputs = self.set_conditions();
@@ -42,13 +41,21 @@ class SIMPLE(object):
     self.error_source_graph = tf.Graph();
     with self.error_source_graph.as_default():
       self.error_source_inputs, self.error_source_outputs = self.error_source();
+    # velocities, pressure initialization
+    with tf.Session(graph = self.initialization_graph) as sess:
+      self.u, self.v, self.w, self.P = sess.run([output.outputs[0] for output in self.initialization_outputs]);
+    # set conditions
+    with tf.Session(graph = self.set_conditions_graph) as sess:
+      self.u, self.v, self.w, self.P = sess.run([output.outputs[0] for output in self.set_conditions_outputs],
+                                                feed_dict = {input.outputs[0]:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
+
   def domain_discretization(self,):
     dx = 1/self.nx;
-    x = tf.constant([i * dx for i in range(self.nx + 1)], dtype = self.dtype); # x in range [0,1] quantized into nx+1 values
+    x = np.array([i * dx for i in range(self.nx + 1)], dtype = np.float32 if self.dtype == tf.float32 else np.float64); # x in range [0,1] quantized into nx+1 values
     dy = 2*pi/(self.ny + 1);
-    y = tf.constant([i * dy for i in range(self.ny + 1)], dtype = self.dtype); # y in range [0, 2 * pi] quantized into ny+1 values
+    y = np.array([i * dy for i in range(self.ny + 1)], dtype = np.float32 if self.dtype == tf.float32 else np.float64); # y in range [0, 2 * pi] quantized into ny+1 values
     dz = 1/self.nz;
-    z = tf.constant([i * dz for i in range(self.nz + 1)], dtype = self.dtype); # z in range [0,1] quantized into nz+1 values
+    z = np.array([i * dz for i in range(self.nz + 1)], dtype = np.float32 if self.dtype == tf.float32 else np.float64); # z in range [0,1] quantized into nz+1 values
     # NOTE: x.shape = (nx+1,) y.shape = (ny + 1) z.shape = (nz + 1)
     return x,y,z, dx,dy,dz;
   def fluid_properties(self,):
