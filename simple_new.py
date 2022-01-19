@@ -43,10 +43,15 @@ class Simple(object):
     x_v = r * tf.math.cos(theta);
     return x_pos, y_pos, x_u, x_v;
   def CDiff(self,):
-    
+    # ny x nx matrix, west, north, east, south boundaries are the corresponding boundaries of the matrix
+    a = 
+  def UDiff(self,):
+    pass;
   def solve(self,):
     with tf.Session(graph = self.circ_v) as sess:
-      self.u, self.v = sess.run([self.x_u.outputs[0], self.x_v.outputs[0]],
+      sess.run([self.x_u.outputs[0], self.x_v.outputs[0]],
                                 feed_dict = {self.x_pos.outputs[0]: self.x,
                                              self.y_pos.outputs[0]: self.y});
+    with tf.Session(graph = self.cdiff) as sess:
+      sess.run([])
     
