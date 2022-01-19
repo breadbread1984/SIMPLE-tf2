@@ -5,7 +5,7 @@ import numpy as np;
 import tensorflow as tf;
 
 class SIMPLE(object):
-  def __init__(self, nx=20,ny=30,nz=20, dtype = tf.float64):
+  def __init__(self, nx=20,ny=30,nz=20, dtype = tf.float64, velocity_iter = 10, pressure_iter = 20):
     self.dtype = dtype;
     self.nx = nx;
     self.ny = ny;
@@ -25,16 +25,16 @@ class SIMPLE(object):
       self.set_conditions_inputs, self.set_conditions_outputs = self.set_conditions();
     self.momento_x_graph = tf.Graph();
     with self.momento_x_graph.as_default():
-      self.momento_x_inputs, self.momento_x_outputs = self.momento_x(10);
+      self.momento_x_inputs, self.momento_x_outputs = self.momento_x(velocity_iter);
     self.momento_y_graph = tf.Graph();
     with self.momento_y_graph.as_default():
-      self.momento_y_inputs, self.momento_y_outputs = self.momento_y(10);
+      self.momento_y_inputs, self.momento_y_outputs = self.momento_y(velocity_iter);
     self.momento_z_graph = tf.Graph();
     with self.momento_z_graph.as_default():
-      self.momento_z_inputs, self.momento_z_outputs = self.momento_z(10);
+      self.momento_z_inputs, self.momento_z_outputs = self.momento_z(velocity_iter);
     self.pressure_graph = tf.Graph();
     with self.pressure_graph.as_default():
-      self.pressure_inputs, self.pressure_outputs = self.pressure(20);
+      self.pressure_inputs, self.pressure_outputs = self.pressure(pressure_iter);
     self.ensure_quality_graph = tf.Graph();
     with self.ensure_quality_graph.as_default():
       self.ensure_quality_inputs, self.ensure_quality_outputs = self.ensure_quality();
@@ -735,7 +735,7 @@ class SIMPLE(object):
                          area_bottom * tf.gather_nd(w, self.indices(indices_x, indices_y, indices_z)));
     error = tf.math.sqrt(tf.math.reduce_sum(Source**2));
     return (u, v, w, x, y, z), (error,);
-  def solve(self, iteration = 10, velocity_iter = 10, pressure_iter = 20):
+  def solve(self, iteration = 10):
     errors = list();
     def debug(i):
       u_is_nan = 'true' if np.any(np.isnan(self.u)) else 'false';
