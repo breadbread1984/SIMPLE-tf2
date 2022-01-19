@@ -84,13 +84,13 @@ class SIMPLE(object):
     P = tf.zeros((self.nx+1, self.ny+1, self.nz+1), dtype = self.dtype); # P.shape = (21, 31, 21)
     return u,v,w,P;
   def set_conditions(self,):
-    u = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    P = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
+    u = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    P = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
     # NOTE: derivable member function
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx + 1), (-1, 1, 1)), (1, self.ny + 1, self.nz)); # indices_x.shape = (nx, ny+1, nz)
     indices_y = tf.tile(tf.reshape(tf.range(0, self.ny + 1), (1, -1, 1)), (self.nx, 1, self.nz)); # indices_y.shape = (nx, ny+1, nz)
@@ -111,14 +111,14 @@ class SIMPLE(object):
   def indices(self, indices_x, indices_y, indices_z, dx = 0, dy = 0, dz = 0):
     return tf.stack([indices_x + dx, indices_y + dy, indices_z + dz], axis = -1);
   def momento_x(self, velocity_iter):
-    u = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    P = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    u_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
+    u = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    P = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    u_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
     
     indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x = 2, ... , nx - 1 has totally nx - 2 numbers
     indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 2, 1, self.nz - 1)); # indices_y = 1, ... , ny - 1 has totally ny - 1 numbers
@@ -251,14 +251,14 @@ class SIMPLE(object):
       #assert tf.math.reduce_any(tf.math.is_nan(self.u)) != True;
     return (u, P, u_old, v_old, w_old, x, y, z), (new_u, Apu);
   def momento_y(self, velocity_iter):
-    v = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    P = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    u_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
+    v = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    P = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    u_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
     
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 2, self.nz - 1)); # indices_x = 1, ... , nx - 1 has totally nx - 1 numbers
     indices_y = tf.tile(tf.reshape(tf.range(2, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # indices_y = 2, ... , ny - 1 has totally ny - 2 numbers
@@ -385,14 +385,14 @@ class SIMPLE(object):
       #assert tf.math.reduce_any(tf.math.is_nan(self.v)) != True;
     return (v, P, u_old, v_old, w_old, x, y, z), (new_v, Apv);
   def momento_z(self, velocity_iter):
-    w = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    P = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    u_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w_old = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
+    w = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    P = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    u_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w_old = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
     
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 2)); # indices_x = 1, ... , nx - 1 has totally nx - 1 numbers
     indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 2)); # indices_y = 1, ... , ny - 1 has totally ny - 1 numbers
@@ -517,16 +517,16 @@ class SIMPLE(object):
       #assert tf.math.reduce_any(tf.math.is_nan(self.w)) != True;
     return (w, P, u_old, v_old, w_old, x, y, z), (new_w, Apw);
   def pressure(self, pressure_iter):
-    u = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    P = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
-    Apu = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    Apv = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    Apw = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    u = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    P = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
+    Apu = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    Apv = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    Apw = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
     
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x = 1, ..., nx - 1 has totally nx - 1 numbers
     indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # indices_y = 1, ..., ny - 1 has totally ny - 1 numbers
@@ -615,16 +615,16 @@ class SIMPLE(object):
     #assert tf.math.reduce_any(tf.math.is_nan(self.P)) != True;
     return (u, v, w, P, x, y, z, Apu, Apv, Apw), (new_P, Pp);
   def ensure_quality(self,):
-    u = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
-    Pp = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    Apu = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    Apv = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    Apw = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    u = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
+    Pp = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    Apu = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    Apv = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    Apw = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
 
     # correcting u
     u_indices_x = tf.tile(tf.reshape(tf.range(2, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # u_indices.x.shape = (nx-2, ny-1, nz-1)
@@ -701,12 +701,12 @@ class SIMPLE(object):
              );
     return (u, v, w, x, y, z, Pp, Apu, Apv, Apw), (new_u, new_v, new_w);
   def error_source(self, errors):
-    u = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    v = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    w = tf.placeholder((self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
-    x = tf.placeholder((self.nx + 1), dtype = self.dtype);
-    y = tf.placeholder((self.ny + 1), dtype = self.dtype);
-    z = tf.placeholder((self.nz + 1), dtype = self.dtype);
+    u = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    v = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    w = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
+    x = tf.placeholder(shape = (self.nx + 1), dtype = self.dtype);
+    y = tf.placeholder(shape = (self.ny + 1), dtype = self.dtype);
+    z = tf.placeholder(shape = (self.nz + 1), dtype = self.dtype);
 
     indices_x = tf.tile(tf.reshape(tf.range(1, self.nx), (-1, 1, 1)), (1, self.ny - 1, self.nz - 1)); # indices_x.shape = (nx-1, ny-1, nz-1)
     indices_y = tf.tile(tf.reshape(tf.range(1, self.ny), (1, -1, 1)), (self.nx - 1, 1, self.nz - 1)); # indices_y.shape = (nx-1, ny-1, nz-1)
