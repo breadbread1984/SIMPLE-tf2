@@ -43,11 +43,11 @@ class SIMPLE(object):
       self.error_source_inputs, self.error_source_outputs = self.error_source();
     # velocities, pressure initialization
     with tf.Session(graph = self.initialization_graph) as sess:
-      self.u, self.v, self.w, self.P = sess.run([output.outputs[0] for output in self.initialization_outputs]);
+      self.u, self.v, self.w, self.P = sess.run([output for output in self.initialization_outputs]);
     # set conditions
     with tf.Session(graph = self.set_conditions_graph) as sess:
-      self.u, self.v, self.w, self.P = sess.run([output.outputs[0] for output in self.set_conditions_outputs],
-                                                feed_dict = {input.outputs[0]:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
+      self.u, self.v, self.w, self.P = sess.run([output for output in self.set_conditions_outputs],
+                                                feed_dict = {input:value for input, value in zip(self.set_conditions_inputs, [self.u, self.v, self.w, self.P, self.x, self.y, self.z])});
 
   def domain_discretization(self,):
     dx = 1/self.nx;
