@@ -700,7 +700,7 @@ class SIMPLE(object):
                w
              );
     return (u, v, w, x, y, z, Pp, Apu, Apv, Apw), (new_u, new_v, new_w);
-  def error_source(self, errors):
+  def error_source(self,):
     u = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
     v = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
     w = tf.placeholder(shape = (self.nx + 1, self.ny + 1, self.nz + 1), dtype = self.dtype);
